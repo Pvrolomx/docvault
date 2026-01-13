@@ -8,9 +8,34 @@ export default function Login() {
   const [isSetup, setIsSetup] = useState(false)
   const [confirmPin, setConfirmPin] = useState('')
   const [step, setStep] = useState('check')
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [showInstall, setShowInstall] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('SW registrado'))
+        .catch((err) => console.log('SW error:', err))
+    }
+
+    // Detectar si ya está instalada
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true)
+    }
+
+    // Capturar evento de instalación
+    const handleBeforeInstall = (e) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstall(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall)
+
+    // Check PIN
     const savedPin = localStorage.getItem('docvault_pin')
     if (savedPin) {
       setStep('login')
@@ -18,7 +43,24 @@ export default function Login() {
       setStep('setup')
       setIsSetup(true)
     }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
+    }
   }, [])
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return
+    
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    
+    if (outcome === 'accepted') {
+      setIsInstalled(true)
+    }
+    setDeferredPrompt(null)
+    setShowInstall(false)
+  }
 
   const handlePinInput = (digit) => {
     if (pin.length < 4) {
@@ -99,6 +141,17 @@ export default function Login() {
             </button>
           ))}
         </div>
+
+        {/* Botón de instalar */}
+        {showInstall && !isInstalled && (
+          <button style={styles.installBtn} onClick={handleInstallClick}>
+            📲 Instalar App
+          </button>
+        )}
+
+        {isInstalled && (
+          <p style={styles.installedText}>✓ App instalada</p>
+        )}
       </div>
       
       <footer style={styles.footer}>
@@ -164,6 +217,27 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  installBtn: {
+    marginTop: '1.5rem',
+    background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
+    border: 'none',
+    borderRadius: '12px',
+    padding: '0.875rem 1.5rem',
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#000',
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem'
+  },
+  installedText: {
+    marginTop: '1.5rem',
+    color: '#4ade80',
+    fontSize: '0.9rem'
   },
   footer: {
     marginTop: '2rem',
