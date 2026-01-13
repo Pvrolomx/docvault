@@ -11,6 +11,7 @@ const DOC_TYPES = [
   { id: 'pasaporte', name: 'Pasaporte', icon: '🛂' },
   { id: 'licencia', name: 'Licencia de Conducir', icon: '🚗' },
   { id: 'acta_matrimonio', name: 'Acta de Matrimonio', icon: '💍' },
+  { id: 'escrituras', name: 'Escrituras', icon: '🏡' },
   { id: 'otro', name: 'Otro Documento', icon: '📎' },
 ]
 
@@ -21,9 +22,12 @@ export default function Boveda() {
   const [editingName, setEditingName] = useState(false)
   const [tempName, setTempName] = useState('')
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showSyncModal, setShowSyncModal] = useState(false)
+  const [syncCode, setSyncCode] = useState('')
   const [uploadTarget, setUploadTarget] = useState(null)
   const cameraInputRef = useRef(null)
   const galleryInputRef = useRef(null)
+  const importInputRef = useRef(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -97,6 +101,45 @@ export default function Boveda() {
     setEditingName(false)
   }
 
+  // Exportar datos para sync
+  const handleExport = () => {
+    const data = {
+      perfiles: perfiles,
+      exported: new Date().toISOString()
+    }
+    const json = JSON.stringify(data)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `docvault-backup-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // Importar datos
+  const handleImport = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result)
+        if (data.perfiles) {
+          if (confirm('¿Reemplazar todos los documentos actuales con los importados?')) {
+            savePerfiles(data.perfiles)
+            alert('Documentos importados correctamente')
+            setShowSyncModal(false)
+          }
+        }
+      } catch (err) {
+        alert('Error al leer el archivo')
+      }
+    }
+    reader.readAsText(file)
+  }
+
   // Modal de selección cámara/imagen
   const UploadModal = () => (
     <div style={styles.modalOverlay} onClick={() => setShowUploadModal(false)}>
@@ -119,6 +162,29 @@ export default function Boveda() {
     </div>
   )
 
+  // Modal de Sync
+  const SyncModal = () => (
+    <div style={styles.modalOverlay} onClick={() => setShowSyncModal(false)}>
+      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+        <h3 style={styles.modalTitle}>Sincronizar Documentos</h3>
+        <p style={styles.syncDesc}>Exporta desde tu PC e importa en tu celular</p>
+        <div style={styles.modalOptions}>
+          <button style={styles.modalBtn} onClick={handleExport}>
+            <span style={styles.modalIcon}>📤</span>
+            <span>Exportar (descargar)</span>
+          </button>
+          <button style={styles.modalBtn} onClick={() => importInputRef.current?.click()}>
+            <span style={styles.modalIcon}>📥</span>
+            <span>Importar (cargar)</span>
+          </button>
+        </div>
+        <button style={styles.modalCancel} onClick={() => setShowSyncModal(false)}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+
   // Selección de perfil
   if (!perfil) {
     return (
@@ -128,21 +194,35 @@ export default function Boveda() {
         
         <div style={styles.profileGrid}>
           <button style={styles.profileCard} onClick={() => setPerfil('yo')}>
-            <span style={styles.profileIcon}>👤</span>
+            <img src="/cosota.png" alt="Yo" style={styles.profileImg} />
             <span style={styles.profileName}>{perfiles.yo.nombre}</span>
             <span style={styles.docCount}>{Object.keys(perfiles.yo.docs).length} docs</span>
           </button>
           
           <button style={styles.profileCard} onClick={() => setPerfil('esposa')}>
-            <span style={styles.profileIcon}>👩</span>
+            <img src="/cosita.png" alt="Esposa" style={styles.profileImg} />
             <span style={styles.profileName}>{perfiles.esposa.nombre}</span>
             <span style={styles.docCount}>{Object.keys(perfiles.esposa.docs).length} docs</span>
           </button>
         </div>
         
-        <button style={styles.logoutBtn} onClick={handleLogout}>
-          🔒 Bloquear
-        </button>
+        <div style={styles.bottomActions}>
+          <button style={styles.syncBtn} onClick={() => setShowSyncModal(true)}>
+            🔄 Sincronizar
+          </button>
+          <button style={styles.logoutBtn} onClick={handleLogout}>
+            🔒 Bloquear
+          </button>
+        </div>
+        
+        {showSyncModal && <SyncModal />}
+        <input
+          type="file"
+          ref={importInputRef}
+          onChange={handleImport}
+          accept=".json"
+          style={{ display: 'none' }}
+        />
         
         <footer style={styles.footer}>Creado por C19 Sage | Colmena 2026</footer>
       </div>
@@ -177,6 +257,7 @@ export default function Boveda() {
 
   // Lista de documentos
   const currentProfile = perfiles[perfil]
+  const avatarSrc = perfil === 'yo' ? '/cosota.png' : '/cosita.png'
   
   return (
     <div style={styles.container}>
@@ -197,8 +278,17 @@ export default function Boveda() {
         accept="image/*,.pdf"
         style={{ display: 'none' }}
       />
+      {/* Input para importar */}
+      <input
+        type="file"
+        ref={importInputRef}
+        onChange={handleImport}
+        accept=".json"
+        style={{ display: 'none' }}
+      />
       
       {showUploadModal && <UploadModal />}
+      {showSyncModal && <SyncModal />}
       
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => setPerfil(null)}>← Perfiles</button>
@@ -215,9 +305,10 @@ export default function Boveda() {
             <button onClick={updateProfileName} style={styles.saveNameBtn}>✓</button>
           </div>
         ) : (
-          <h1 style={styles.profileTitle} onClick={() => { setEditingName(true); setTempName(currentProfile.nombre); }}>
-            {perfil === 'yo' ? '👤' : '👩'} {currentProfile.nombre} ✏️
-          </h1>
+          <div style={styles.profileHeader} onClick={() => { setEditingName(true); setTempName(currentProfile.nombre); }}>
+            <img src={avatarSrc} alt="" style={styles.headerAvatar} />
+            <span>{currentProfile.nombre} ✏️</span>
+          </div>
         )}
         <button style={styles.lockBtn} onClick={handleLogout}>🔒</button>
       </div>
@@ -278,7 +369,7 @@ const styles = {
     background: '#1a1a1a',
     border: '2px solid #333',
     borderRadius: '16px',
-    padding: '2rem 1rem',
+    padding: '1.5rem 1rem',
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
@@ -286,12 +377,31 @@ const styles = {
     gap: '0.5rem',
     transition: 'border-color 0.2s'
   },
-  profileIcon: { fontSize: '3rem' },
+  profileImg: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '3px solid #4ade80'
+  },
   profileName: { fontSize: '1.1rem', fontWeight: '600' },
   docCount: { color: '#888', fontSize: '0.85rem' },
+  bottomActions: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    marginTop: '2rem'
+  },
+  syncBtn: {
+    background: '#2563eb',
+    border: 'none',
+    color: '#fff',
+    padding: '0.75rem 1.5rem',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1rem'
+  },
   logoutBtn: {
-    display: 'block',
-    margin: '2rem auto',
     background: 'transparent',
     border: '1px solid #444',
     color: '#888',
@@ -314,12 +424,18 @@ const styles = {
     fontSize: '1rem',
     cursor: 'pointer'
   },
-  profileTitle: {
-    fontSize: '1.3rem',
-    cursor: 'pointer',
+  profileHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    gap: '0.5rem',
+    cursor: 'pointer',
+    fontSize: '1.2rem'
+  },
+  headerAvatar: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    objectFit: 'cover'
   },
   lockBtn: {
     background: 'transparent',
@@ -427,7 +543,8 @@ const styles = {
     textAlign: 'center',
     padding: '0.75rem',
     borderRadius: '8px',
-    fontWeight: '600'
+    fontWeight: '600',
+    textDecoration: 'none'
   },
   deleteBtn: {
     background: '#ef4444',
@@ -470,8 +587,13 @@ const styles = {
     textAlign: 'center'
   },
   modalTitle: {
-    marginBottom: '1.5rem',
+    marginBottom: '0.5rem',
     fontSize: '1.1rem'
+  },
+  syncDesc: {
+    color: '#888',
+    fontSize: '0.85rem',
+    marginBottom: '1rem'
   },
   modalOptions: {
     display: 'flex',
