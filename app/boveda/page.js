@@ -3,8 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 const DOC_TYPES = [
-  { id: 'ine_frente', name: 'INE (Frente)', icon: '🪪' },
-  { id: 'ine_vuelta', name: 'INE (Vuelta)', icon: '🪪' },
+  { id: 'ine', name: 'INE', icon: '🪪' },
   { id: 'rfc', name: 'RFC / Constancia SAT', icon: '📄' },
   { id: 'curp', name: 'CURP', icon: '📋' },
   { id: 'comprobante', name: 'Comprobante Domicilio', icon: '🏠' },
@@ -21,8 +20,10 @@ export default function Boveda() {
   const [viewDoc, setViewDoc] = useState(null)
   const [editingName, setEditingName] = useState(false)
   const [tempName, setTempName] = useState('')
-  const fileInputRef = useRef(null)
+  const [showUploadModal, setShowUploadModal] = useState(false)
   const [uploadTarget, setUploadTarget] = useState(null)
+  const cameraInputRef = useRef(null)
+  const galleryInputRef = useRef(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -57,13 +58,22 @@ export default function Boveda() {
       }
       savePerfiles(newPerfiles)
       setUploadTarget(null)
+      setShowUploadModal(false)
     }
     reader.readAsDataURL(file)
   }
 
   const handleUploadClick = (docType) => {
     setUploadTarget(docType)
-    fileInputRef.current?.click()
+    setShowUploadModal(true)
+  }
+
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click()
+  }
+
+  const handleGalleryClick = () => {
+    galleryInputRef.current?.click()
   }
 
   const handleDeleteDoc = (docType) => {
@@ -86,6 +96,28 @@ export default function Boveda() {
     }
     setEditingName(false)
   }
+
+  // Modal de selección cámara/imagen
+  const UploadModal = () => (
+    <div style={styles.modalOverlay} onClick={() => setShowUploadModal(false)}>
+      <div style={styles.modal} onClick={e => e.stopPropagation()}>
+        <h3 style={styles.modalTitle}>Agregar documento</h3>
+        <div style={styles.modalOptions}>
+          <button style={styles.modalBtn} onClick={handleCameraClick}>
+            <span style={styles.modalIcon}>📷</span>
+            <span>Cámara</span>
+          </button>
+          <button style={styles.modalBtn} onClick={handleGalleryClick}>
+            <span style={styles.modalIcon}>🖼️</span>
+            <span>Imagen / Documento</span>
+          </button>
+        </div>
+        <button style={styles.modalCancel} onClick={() => setShowUploadModal(false)}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
 
   // Selección de perfil
   if (!perfil) {
@@ -148,13 +180,25 @@ export default function Boveda() {
   
   return (
     <div style={styles.container}>
+      {/* Input para cámara */}
       <input
         type="file"
-        ref={fileInputRef}
+        ref={cameraInputRef}
+        onChange={handleFileUpload}
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+      />
+      {/* Input para galería/documentos */}
+      <input
+        type="file"
+        ref={galleryInputRef}
         onChange={handleFileUpload}
         accept="image/*,.pdf"
         style={{ display: 'none' }}
       />
+      
+      {showUploadModal && <UploadModal />}
       
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={() => setPerfil(null)}>← Perfiles</button>
@@ -403,5 +447,60 @@ const styles = {
     left: 0,
     right: 0,
     background: 'linear-gradient(transparent, #0a0a0a)'
+  },
+  // Modal styles
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.8)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  },
+  modal: {
+    background: '#1a1a1a',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    width: '90%',
+    maxWidth: '320px',
+    textAlign: 'center'
+  },
+  modalTitle: {
+    marginBottom: '1.5rem',
+    fontSize: '1.1rem'
+  },
+  modalOptions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    marginBottom: '1rem'
+  },
+  modalBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.75rem',
+    background: '#2a2a2a',
+    border: '1px solid #333',
+    borderRadius: '12px',
+    padding: '1rem',
+    color: '#fff',
+    fontSize: '1rem',
+    cursor: 'pointer'
+  },
+  modalIcon: {
+    fontSize: '1.5rem'
+  },
+  modalCancel: {
+    background: 'transparent',
+    border: 'none',
+    color: '#888',
+    padding: '0.75rem',
+    cursor: 'pointer',
+    width: '100%'
   }
 }
