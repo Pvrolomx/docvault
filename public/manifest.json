@@ -1,11 +1,11 @@
 {
   "name": "DocVault",
   "short_name": "DocVault",
-  "description": "Repositorio personal de documentos",
+  "description": "Bóveda personal de documentos",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0D0D0D",
-  "theme_color": "#0D0D0D",
+  "background_color": "#FBF7EF",
+  "theme_color": "#FBF7EF",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
