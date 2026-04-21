@@ -4,51 +4,52 @@ import { useState, useEffect, useRef } from "react";
 const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const OWNERS = ["Rolo", "Claudia", "Castle"];
+const OWNERS = ["Rolo", "Claudia", "Castle"] as const;
+type Owner = typeof OWNERS[number];
 
 const CATEGORIES_PERSONAL = [
-  { id: "identidad",   icon: "◈", label: "Identidad",         sub: "INE · Pasaporte · CURP · Acta de Nacimiento" },
-  { id: "fiscal",      icon: "◉", label: "Fiscal & IMSS",     sub: "RFC · Constancia SAT · NSS · IMSS" },
-  { id: "profesional", icon: "◆", label: "Profesional",       sub: "Cédula · Título · Diplomas · Certificados" },
-  { id: "domicilio",   icon: "◫", label: "Domicilio",         sub: "Comprobante · CFE · Agua · Teléfono" },
-  { id: "vehicular",   icon: "◳", label: "Vehicular",         sub: "Licencia · Factura · Tarjeta · Seguro" },
-  { id: "civil",       icon: "◑", label: "Estado Civil",      sub: "Acta de Matrimonio · Divorcio · Actas" },
-  { id: "inmuebles",   icon: "◰", label: "Inmuebles",         sub: "Escrituras · Fideicomiso · Predial · Planos" },
+  { id: "identidad",   icon: "◈", label: "Identidad",         sub: "INE · Pasaporte · CURP · Acta" },
+  { id: "fiscal",      icon: "◉", label: "Fiscal & IMSS",     sub: "RFC · SAT · NSS · IMSS" },
+  { id: "profesional", icon: "◆", label: "Profesional",       sub: "Cédula · Título · Diplomas" },
+  { id: "domicilio",   icon: "◫", label: "Domicilio",         sub: "CFE · Agua · Teléfono" },
+  { id: "vehicular",   icon: "◳", label: "Vehicular",         sub: "Licencia · Factura · Seguro" },
+  { id: "civil",       icon: "◑", label: "Estado Civil",      sub: "Matrimonio · Divorcio" },
+  { id: "inmuebles",   icon: "◰", label: "Inmuebles",         sub: "Escrituras · Fideicomiso · Predial" },
   { id: "legal",       icon: "◮", label: "Legal & Sucesorio", sub: "Poderes · Testamento · Contratos" },
-  { id: "salud",       icon: "◍", label: "Salud & Seguro",    sub: "INAPAM · Seguro médico · Expediente" },
-  { id: "financiero",  icon: "◎", label: "Financiero",        sub: "Cuentas · Estados · Inversiones · Crédito" },
-  { id: "migratorio",  icon: "◐", label: "Migratorio",        sub: "Visa · Residente · FM3 · CURP extranjero" },
-  { id: "otros",       icon: "◯", label: "Otros",             sub: "Documentos varios · Misceláneos" },
+  { id: "salud",       icon: "◍", label: "Salud & Seguro",    sub: "INAPAM · Médico · Expediente" },
+  { id: "financiero",  icon: "◎", label: "Financiero",        sub: "Cuentas · Estados · Inversiones" },
+  { id: "migratorio",  icon: "◐", label: "Migratorio",        sub: "Visa · Residente · FM3" },
+  { id: "otros",       icon: "◯", label: "Otros",             sub: "Varios · Misceláneos" },
 ];
 
 const CATEGORIES_CASTLE = [
-  { id: "constitucion", icon: "◈", label: "Constitución",      sub: "Acta · Estatutos · Modificaciones" },
-  { id: "fiscal_emp",   icon: "◉", label: "Fiscal",            sub: "RFC · Constancia SAT · Declaraciones" },
-  { id: "imss_emp",     icon: "◆", label: "IMSS & Nómina",     sub: "Registro patronal · Altas/Bajas · Nómina" },
-  { id: "permisos",     icon: "◫", label: "Permisos & Licencias", sub: "Uso de suelo · Operación · Turismo" },
-  { id: "contratos",    icon: "◳", label: "Contratos",         sub: "Arrendamiento · Servicios · Proveedores" },
-  { id: "bancario",     icon: "◑", label: "Bancario",          sub: "Cuentas · Estados · Tarjetas corporativas" },
-  { id: "inmuebles_emp",icon: "◰", label: "Inmuebles",         sub: "Propiedades · Contratos de renta" },
-  { id: "poderes",      icon: "◮", label: "Poderes & Legal",   sub: "Poderes notariales · Representantes" },
-  { id: "plataformas",  icon: "◍", label: "Plataformas",       sub: "Airbnb · VRBO · Booking · Licencias" },
-  { id: "seguros",      icon: "◎", label: "Seguros",           sub: "Pólizas · Propiedades · Responsabilidad" },
-  { id: "contabilidad", icon: "◐", label: "Contabilidad",      sub: "Balances · Estados financieros · Auditorías" },
-  { id: "otros_emp",    icon: "◯", label: "Otros",             sub: "Documentos corporativos varios" },
+  { id: "constitucion",  icon: "◈", label: "Constitución",      sub: "Acta · Estatutos · Modificaciones" },
+  { id: "fiscal_emp",    icon: "◉", label: "Fiscal",            sub: "RFC · SAT · Declaraciones" },
+  { id: "imss_emp",      icon: "◆", label: "IMSS & Nómina",     sub: "Patronal · Altas/Bajas" },
+  { id: "permisos",      icon: "◫", label: "Permisos",          sub: "Uso suelo · Operación · Turismo" },
+  { id: "contratos",     icon: "◳", label: "Contratos",         sub: "Arrendamiento · Servicios" },
+  { id: "bancario",      icon: "◑", label: "Bancario",          sub: "Cuentas · Estados · Tarjetas" },
+  { id: "inmuebles_emp", icon: "◰", label: "Inmuebles",         sub: "Propiedades · Rentas" },
+  { id: "poderes",       icon: "◮", label: "Poderes & Legal",   sub: "Notariales · Representantes" },
+  { id: "plataformas",   icon: "◍", label: "Plataformas",       sub: "Airbnb · VRBO · Booking" },
+  { id: "seguros",       icon: "◎", label: "Seguros",           sub: "Pólizas · Responsabilidad" },
+  { id: "contabilidad",  icon: "◐", label: "Contabilidad",      sub: "Balances · Estados · Auditorías" },
+  { id: "otros_emp",     icon: "◯", label: "Otros",             sub: "Corporativos varios" },
 ];
 
-const DOC_TYPES = ["Original","Copia simple","Copia certificada","Digital oficial","Apostillada","Traducida","Vigente","Vencida","Histórico"];
-
-const PAL: Record<string,{accent:string;dim:string;mid:string;dot:string}> = {
-  Rolo:    { accent: "#C8A96E", dim: "#C8A96E22", mid: "#C8A96E44", dot: "#C8A96E" },
-  Claudia: { accent: "#9B7BB8", dim: "#9B7BB822", mid: "#9B7BB844", dot: "#9B7BB8" },
-  Castle:  { accent: "#4EADA0", dim: "#4EADA022", mid: "#4EADA044", dot: "#4EADA0" },
+// Paleta LUMINOSA — papel crema, tinta cálida, acentos vivos pero sofisticados
+const PAL: Record<Owner,{accent:string;light:string;tint:string;ink:string;emoji:string}> = {
+  Rolo:    { accent: "#B8864A", light: "#D9B27F", tint: "#F5EBD7", ink: "#5C3E1A", emoji: "🌊" },
+  Claudia: { accent: "#8B5FA8", light: "#B592CC", tint: "#EFE4F5", ink: "#3F2454", emoji: "🐴" },
+  Castle:  { accent: "#2D8F7A", light: "#6EBFA8", tint: "#DDF0EA", ink: "#164A3E", emoji: "🏛" },
 };
 
+// ─── CRYPTO ──────────────────────────────────────────────────────────────────
 const ITERATIONS = 310000;
 const SALT_LEN = 32;
 const IV_LEN   = 12;
 
-async function generateSalt() {
+function genSalt() {
   const s = crypto.getRandomValues(new Uint8Array(SALT_LEN));
   return btoa(String.fromCharCode(...s));
 }
@@ -61,7 +62,7 @@ async function deriveKey(password: string, saltB64: string) {
     km, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]
   );
 }
-async function encryptData(data: unknown, key: CryptoKey) {
+async function encrypt(data: unknown, key: CryptoKey) {
   const enc = new TextEncoder();
   const iv  = crypto.getRandomValues(new Uint8Array(IV_LEN));
   const ct  = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, enc.encode(JSON.stringify(data)));
@@ -69,49 +70,51 @@ async function encryptData(data: unknown, key: CryptoKey) {
   combined.set(iv); combined.set(new Uint8Array(ct), iv.length);
   return btoa(String.fromCharCode(...combined));
 }
-async function decryptData(b64: string, key: CryptoKey) {
+async function decrypt(b64: string, key: CryptoKey) {
   const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   const iv = combined.slice(0, IV_LEN);
   const ct = combined.slice(IV_LEN);
   const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv }, key, ct);
   return JSON.parse(new TextDecoder().decode(pt));
 }
-async function hashPassword(password: string) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password + "_docvault_v1"));
+async function hashPwd(pwd: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd + "_docvault_v1"));
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
-// ─── STORAGE ─────────────────────────────────────────────────────────────────
-async function sbUploadFile(vaultId: string, catId: string, file: File): Promise<string> {
-  const ext  = file.name.split('.').pop() || 'bin';
-  const name = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-  const path = `${vaultId}/${catId}/${name}`;
+// ─── SUPABASE (REST directo) ─────────────────────────────────────────────────
+async function sbUpload(vaultId: string, catId: string, file: File): Promise<string> {
+  const ext = file.name.includes(".") ? file.name.substring(file.name.lastIndexOf(".")) : "";
+  const uid = crypto.randomUUID();
+  const path = `${vaultId}/${catId}/${uid}${ext}`;
   const r = await fetch(`${SUPABASE_URL}/storage/v1/object/docvault-files/${path}`, {
     method: "POST",
-    headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}`, "Content-Type": file.type || "application/octet-stream" },
+    headers: {
+      "apikey": SUPABASE_ANON,
+      "Authorization": `Bearer ${SUPABASE_ANON}`,
+      "Content-Type": file.type || "application/octet-stream",
+    },
     body: file,
   });
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Upload failed'); }
+  if (!r.ok) throw new Error(`Upload failed: ${r.status}`);
   return path;
 }
-
-async function sbGetFileUrl(path: string): Promise<string> {
+async function sbSignedUrl(path: string): Promise<string> {
   const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/docvault-files/${path}`, {
     method: "POST",
     headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ expiresIn: 300 }),
+    body: JSON.stringify({ expiresIn: 3600 }),
   });
+  if (!r.ok) throw new Error(`Sign failed: ${r.status}`);
   const d = await r.json();
   return `${SUPABASE_URL}/storage/v1${d.signedURL}`;
 }
-
-async function sbDeleteFile(path: string) {
+async function sbDeleteObj(path: string) {
   await fetch(`${SUPABASE_URL}/storage/v1/object/docvault-files/${path}`, {
     method: "DELETE",
     headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` },
   });
 }
-
 async function sbSave(vaultId: string, blob: string, salt: string) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/docvault_docs`, {
     method:"POST",
@@ -128,30 +131,42 @@ async function sbLoad(vaultId: string) {
   return rows.length ? rows[0] : null;
 }
 
-type FileAttachment = { name: string; path: string; size: number; type: string; uploaded: number };
-type Doc = { id:string; name:string; type:string; notes:string; date:string; expires:string; created:number; files?: FileAttachment[] };
-type VaultData = Record<string, Doc[]>;
+// ─── TIPOS ───────────────────────────────────────────────────────────────────
+type DocFile = {
+  id: string;
+  name: string;
+  path: string;
+  size: number;
+  mime: string;
+  notes: string;
+  uploaded: number;
+};
+type VaultData = Record<string, DocFile[]>;
 
+// ─── COMPONENTE ──────────────────────────────────────────────────────────────
 export default function DocVault() {
-  const [screen, setScreen]       = useState<"login"|"app">("login");
-  const [owner, setOwner]         = useState("Rolo");
-  const [pinInput, setPinInput]   = useState("");
-  const [pinError, setPinError]   = useState("");
-  const [vaultData, setVaultData] = useState<Record<string,VaultData>>({ Rolo:{}, Claudia:{}, Castle:{} });
-  const [keys,  setKeys]          = useState<Record<string,CryptoKey|null>>({ Rolo:null, Claudia:null, Castle:null });
-  const [salts, setSalts]         = useState<Record<string,string>>({ Rolo:"", Claudia:"", Castle:"" });
-  const [vaultIds, setVaultIds]   = useState<Record<string,string>>({ Rolo:"", Claudia:"", Castle:"" });
-  const [openCat, setOpenCat]     = useState<string|null>(null);
-  const [modal, setModal]         = useState<{cat:string;doc?:Doc}|null>(null);
-  const [form,  setForm]          = useState({ name:"", type:"Original", notes:"", date:"", expires:"" });
-  const [search, setSearch]       = useState("");
-  const [saving,  setSaving]      = useState(false);
-  const [syncing, setSyncing]     = useState(false);
-  const [uploading, setUploading] = useState<string|null>(null); // docId en proceso
-  const [dragOver, setDragOver]   = useState<string|null>(null); // docId con drag encima
-  const [toast,   setToast]       = useState<{msg:string;err?:boolean}|null>(null);
+  const [screen, setScreen] = useState<"login"|"app">("login");
+  const [owner, setOwner]   = useState<Owner>("Rolo");
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+
+  // Un solo estado por owner — simple
+  const [vaultData, setVaultData] = useState<Record<Owner, VaultData>>({ Rolo:{}, Claudia:{}, Castle:{} });
+  const [vaultId, setVaultId] = useState<Record<Owner, string>>({ Rolo:"", Claudia:"", Castle:"" });
+  const [vaultKey, setVaultKey] = useState<Record<Owner, CryptoKey|null>>({ Rolo:null, Claudia:null, Castle:null });
+  const [vaultSalt, setVaultSalt] = useState<Record<Owner, string>>({ Rolo:"", Claudia:"", Castle:"" });
+
+  // Estados de UI — dos únicos flags
+  const [syncing, setSyncing] = useState(false);
+  const [uploading, setUploading] = useState<Set<string>>(new Set());
+
+  const [openCat, setOpenCat] = useState<string|null>(null);
+  const [editing, setEditing] = useState<{catId:string;fileId:string}|null>(null);
+  const [toast, setToast] = useState<{msg:string;err?:boolean}|null>(null);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const pal = PAL[owner];
+  const CATEGORIES = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
 
   useEffect(() => {
     const h = (e:any) => { e.preventDefault(); setInstallPrompt(e); };
@@ -160,602 +175,766 @@ export default function DocVault() {
   }, []);
 
   const showToast = (msg:string, err=false) => {
-    setToast({msg,err}); setTimeout(()=>setToast(null), 2500);
+    setToast({msg, err});
+    setTimeout(() => setToast(null), 2800);
   };
 
-  const unlock = async () => {
+  // ─── LOGIN ─────────────────────────────────────────────────────────────────
+  const login = async () => {
     if (pinInput.length < 4) { setPinError("Mínimo 4 caracteres"); return; }
-    setSyncing(true); setPinError("");
+    setPinError("");
+    setSyncing(true);
     try {
-      const vaultId = await hashPassword(`${owner}_${pinInput}`);
-      const row = await sbLoad(vaultId);
-      let salt:string, key:CryptoKey, data:VaultData;
+      const vid = await hashPwd(`${owner}_${pinInput}`);
+      const row = await sbLoad(vid);
+      let key:CryptoKey, salt:string, data:VaultData = {};
+
       if (row) {
-        salt = row.salt; key = await deriveKey(pinInput, salt);
-        try {
-          data = await decryptData(row.blob, key);
-          // Asegurar que todas las categorías actuales existen (por si se agregaron después)
-          const cats = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
-          let patched = false;
-          for (const c of cats) {
-            if (!data[c.id]) { data[c.id] = []; patched = true; }
-          }
-          // Si faltaban categorías, guardar el vault actualizado
-          if (patched) {
-            const newBlob = await encryptData(data, key);
-            await sbSave(vaultId, newBlob, salt);
-          }
-        }
+        salt = row.salt;
+        key = await deriveKey(pinInput, salt);
+        try { data = await decrypt(row.blob, key) as VaultData; }
         catch { setSyncing(false); setPinError("PIN incorrecto"); return; }
       } else {
-        salt = await generateSalt(); key = await deriveKey(pinInput, salt);
-        data = {};
-        const cats = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
-        for (const c of cats) data[c.id] = [];
-        const blob = await encryptData(data, key);
-        await sbSave(vaultId, blob, salt);
+        salt = genSalt();
+        key = await deriveKey(pinInput, salt);
+        const blob = await encrypt(data, key);
+        await sbSave(vid, blob, salt);
       }
-      setKeys(prev    => ({...prev,[owner]:key}));
-      setSalts(prev   => ({...prev,[owner]:salt}));
-      setVaultIds(prev => ({...prev,[owner]:vaultId}));
-      setVaultData(prev => ({...prev,[owner]:data}));
+
+      setVaultId(p => ({...p, [owner]:vid}));
+      setVaultKey(p => ({...p, [owner]:key}));
+      setVaultSalt(p => ({...p, [owner]:salt}));
+      setVaultData(p => ({...p, [owner]:data}));
       setPinInput(""); setScreen("app");
-      showToast(`${owner} desbloqueado ✓`);
-    } catch { setPinError("Error de conexión"); }
-    setSyncing(false);
+      setSyncing(false);
+    } catch(e:any) {
+      setSyncing(false);
+      setPinError("Error de conexión");
+    }
   };
 
-  const saveToCloud = async (newData:VaultData) => {
-    const key=keys[owner]; const salt=salts[owner]; const vaultId=vaultIds[owner];
-    if (!key||!salt||!vaultId) return;
-    setSaving(true);
-    try { const blob = await encryptData(newData, key); await sbSave(vaultId, blob, salt); }
+  // ─── PERSIST (único punto que habla con Supabase para metadata) ────────────
+  const persistVault = async (newData: VaultData) => {
+    const key = vaultKey[owner];
+    const salt = vaultSalt[owner];
+    const vid = vaultId[owner];
+    if (!key || !salt || !vid) throw new Error("Sesión inválida");
+    setSyncing(true);
+    try {
+      const blob = await encrypt(newData, key);
+      await sbSave(vid, blob, salt);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // ─── UPLOAD FILES ──────────────────────────────────────────────────────────
+  const addFiles = async (catId: string, files: File[]) => {
+    const vid = vaultId[owner];
+    if (!vid) { showToast("Sesión inválida", true); return; }
+
+    const currentCat = vaultData[owner][catId] || [];
+    const newFiles: DocFile[] = [];
+
+    // Agregar cada archivo al set de uploading para mostrar spinner
+    const pendingIds = files.map(() => crypto.randomUUID());
+    setUploading(prev => {
+      const next = new Set(prev);
+      pendingIds.forEach(id => next.add(id));
+      return next;
+    });
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const tempId = pendingIds[i];
+
+      if (file.size > 25 * 1024 * 1024) {
+        showToast(`${file.name} supera 25MB`, true);
+        setUploading(prev => { const n = new Set(prev); n.delete(tempId); return n; });
+        continue;
+      }
+
+      try {
+        const path = await sbUpload(vid, catId, file);
+        const baseName = file.name.replace(/\.[^.]+$/, "");
+        newFiles.push({
+          id: tempId,
+          name: baseName,
+          path,
+          size: file.size,
+          mime: file.type || "application/octet-stream",
+          notes: "",
+          uploaded: Date.now(),
+        });
+      } catch(e:any) {
+        showToast(`Error: ${file.name}`, true);
+      } finally {
+        setUploading(prev => { const n = new Set(prev); n.delete(tempId); return n; });
+      }
+    }
+
+    if (newFiles.length === 0) return;
+
+    // Batch: un solo write al vault con todos los archivos exitosos
+    const updated: VaultData = {
+      ...vaultData[owner],
+      [catId]: [...currentCat, ...newFiles],
+    };
+    setVaultData(p => ({...p, [owner]:updated}));
+
+    try {
+      await persistVault(updated);
+      showToast(`${newFiles.length} archivo${newFiles.length>1?"s":""} agregado${newFiles.length>1?"s":""} ✓`);
+    } catch {
+      showToast("Error al sincronizar", true);
+    }
+  };
+
+  // ─── RENAME / NOTES / DELETE ───────────────────────────────────────────────
+  const updateFile = async (catId: string, fileId: string, patch: Partial<DocFile>) => {
+    const cat = vaultData[owner][catId] || [];
+    const updated: VaultData = {
+      ...vaultData[owner],
+      [catId]: cat.map(f => f.id === fileId ? {...f, ...patch} : f),
+    };
+    setVaultData(p => ({...p, [owner]:updated}));
+    try { await persistVault(updated); }
     catch { showToast("Error al sincronizar", true); }
-    setSaving(false);
   };
 
-  const updateOwnerData = async (newData:VaultData) => {
-    setVaultData(prev => ({...prev,[owner]:newData}));
-    await saveToCloud(newData);
+  const deleteFile = async (catId: string, fileId: string) => {
+    const cat = vaultData[owner][catId] || [];
+    const file = cat.find(f => f.id === fileId);
+    if (!file) return;
+    if (!confirm(`Eliminar "${file.name}"?`)) return;
+
+    try { await sbDeleteObj(file.path); } catch {}
+
+    const updated: VaultData = {
+      ...vaultData[owner],
+      [catId]: cat.filter(f => f.id !== fileId),
+    };
+    setVaultData(p => ({...p, [owner]:updated}));
+    setEditing(null);
+
+    try {
+      await persistVault(updated);
+      showToast("Eliminado");
+    } catch { showToast("Error al sincronizar", true); }
   };
 
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const download = async (file: DocFile) => {
+    try {
+      const url = await sbSignedUrl(file.path);
+      const a = document.createElement("a");
+      a.href = url;
+      const ext = file.mime === "application/pdf" ? ".pdf" : "";
+      a.download = file.name + ext;
+      a.target = "_blank";
+      a.click();
+    } catch { showToast("Error al descargar", true); }
+  };
 
-  const openAdd  = (catId:string) => { setModal({cat:catId}); setForm({name:"",type:"Original",notes:"",date:"",expires:""}); setPendingFiles([]); setTimeout(()=>inputRef.current?.focus(),80); };
-  const openEdit = (catId:string, doc:Doc) => { setModal({cat:catId,doc}); setForm({name:doc.name,type:doc.type,notes:doc.notes,date:doc.date,expires:doc.expires}); setPendingFiles([]); setTimeout(()=>inputRef.current?.focus(),80); };
-
-  const submitDoc = async () => {
-    if (!form.name.trim()||!modal) return;
-    const catId   = modal.cat;
-    const vaultId = vaultIds[owner];
-
-    // Asegurar que el vault tiene esta categoría
-    const currentVault = {...(vaultData[owner] || {})};
-    if (!currentVault[catId]) currentVault[catId] = [];
-    const current = [...currentVault[catId]];
-    const docId   = modal.doc ? modal.doc.id : `${catId}-${Date.now()}`;
-    let updated:Doc[];
-
-    // Subir archivos pendientes — usar uploading, NO saving (saving bloquea el botón)
-    let uploadedFiles: FileAttachment[] = modal.doc ? (modal.doc.files||[]) : [];
-    if (pendingFiles.length > 0 && vaultId) {
-      setUploading(docId);
-      for (const file of pendingFiles) {
-        try {
-          const path = await sbUploadFile(vaultId, catId, file);
-          uploadedFiles = [...uploadedFiles, {name:file.name, path, size:file.size, type:file.type, uploaded:Date.now()}];
-        } catch(e:any) { showToast(`Error subiendo ${file.name}`, true); }
-      }
-      setUploading(null);
-    }
-
-    if (modal.doc) {
-      updated = current.map(d => d.id===docId ? {...d,...form,files:uploadedFiles} : d);
-      showToast("Actualizado ✓");
+  const switchOwner = (o: Owner) => {
+    if (o === owner) return;
+    if (vaultKey[o]) {
+      setOwner(o); setOpenCat(null); setEditing(null);
     } else {
-      updated = [...current, {id:docId,...form,created:Date.now(),files:uploadedFiles}];
-      showToast(uploadedFiles.length>0 ? `Guardado con ${uploadedFiles.length} archivo${uploadedFiles.length>1?"s":""} ✓` : "Guardado ✓");
+      setOwner(o); setScreen("login");
     }
-    await updateOwnerData({...currentVault,[catId]:updated});
-    setPendingFiles([]);
-    setModal(null);
   };
 
-  const deleteDoc = async (catId:string, docId:string) => {
-    // Borrar archivos del doc primero
-    const doc = (vaultData[owner]?.[catId]||[]).find(d=>d.id===docId);
-    if (doc?.files?.length) {
-      for (const f of doc.files) { try { await sbDeleteFile(f.path); } catch {} }
-    }
-    await updateOwnerData({...vaultData[owner],[catId]:(vaultData[owner]?.[catId]||[]).filter(d=>d.id!==docId)});
-    showToast("Eliminado",true);
+  const logout = () => {
+    setVaultData({ Rolo:{}, Claudia:{}, Castle:{} });
+    setVaultKey({ Rolo:null, Claudia:null, Castle:null });
+    setVaultSalt({ Rolo:"", Claudia:"", Castle:"" });
+    setVaultId({ Rolo:"", Claudia:"", Castle:"" });
+    setScreen("login");
+    setOwner("Rolo");
   };
 
-  const handleFiles = async (catId:string, docId:string, files: FileList|File[]) => {
-    const fileArr = Array.from(files);
-    const vaultId = vaultIds[owner];
-    if (!vaultId) return;
-    setUploading(docId);
-    try {
-      const uploaded: FileAttachment[] = [];
-      for (const file of fileArr) {
-        if (file.size > 10 * 1024 * 1024) { showToast(`${file.name} supera 10MB`, true); continue; }
-        const path = await sbUploadFile(vaultId, catId, file);
-        uploaded.push({ name: file.name, path, size: file.size, type: file.type, uploaded: Date.now() });
-      }
-      const catDocs = vaultData[owner]?.[catId] || [];
-      const newDocs = catDocs.map(d => d.id===docId
-        ? {...d, files: [...(d.files||[]), ...uploaded]}
-        : d
-      );
-      await updateOwnerData({...vaultData[owner],[catId]:newDocs});
-      showToast(`${uploaded.length} archivo${uploaded.length!==1?"s":""} subido${uploaded.length!==1?"s":""} ✓`);
-    } catch(e:any) { showToast(e.message||"Error al subir", true); }
-    setUploading(null);
-  };
-
-  const deleteFile = async (catId:string, docId:string, filePath:string) => {
-    try { await sbDeleteFile(filePath); } catch {}
-    const catDocs = vaultData[owner]?.[catId] || [];
-    const newDocs = catDocs.map(d => d.id===docId
-      ? {...d, files:(d.files||[]).filter(f=>f.path!==filePath)}
-      : d
-    );
-    await updateOwnerData({...vaultData[owner],[catId]:newDocs});
-    showToast("Archivo eliminado",true);
-  };
-
-  const downloadFile = async (path:string, name:string) => {
-    try {
-      const url = await sbGetFileUrl(path);
-      const a = document.createElement('a');
-      a.href=url; a.download=name; a.target="_blank";
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    } catch { showToast("Error al descargar",true); }
-  };
-
-  const switchOwner = (o:string) => {
-    setOwner(o); setOpenCat(null);
-    if (!keys[o]) { setScreen("login"); setPinInput(""); setPinError(""); }
-  };
-
-  const pal   = PAL[owner];
-  const CATEGORIES = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
-  const oData = vaultData[owner] || {};
-  const total = Object.values(oData).reduce((s,a)=>s+(a?.length||0),0);
-  const filtered = search.trim()
-    ? CATEGORIES.filter(c => c.label.toLowerCase().includes(search.toLowerCase()) || (oData[c.id]||[]).some(d=>d.name.toLowerCase().includes(search.toLowerCase())))
-    : CATEGORIES;
-  const isExpired  = (d:Doc) => !!d.expires && new Date(d.expires)<new Date();
-  const isExpiring = (d:Doc) => { if(!d.expires||isExpired(d)) return false; return (new Date(d.expires).getTime()-Date.now())/86400000<60; };
-
-  // ── OWNER CARD COMPONENT ──────────────────────────────────────────────────
-  const OwnerCard = ({ o, onClick, showCount }: { o:string; onClick:()=>void; showCount?:boolean }) => {
-    const p     = PAL[o];
-    const cnt   = Object.values(vaultData[o]||{}).reduce((s,a)=>s+(a?.length||0),0);
-    const active = owner === o;
-    const unlocked = !!keys[o];
+  // ─────────────────────────────────────────────────────────────────────────
+  // PANTALLA LOGIN
+  // ─────────────────────────────────────────────────────────────────────────
+  if (screen === "login") {
     return (
-      <button onClick={onClick} style={{
-        flex:1, maxWidth:220,
-        display:"flex", flexDirection:"column", alignItems:"center", gap:10,
-        padding:"20px 16px 16px",
-        borderRadius:16,
-        border:`1px solid ${active ? p.accent+"80" : "#252525"}`,
-        background: active
-          ? `linear-gradient(150deg, ${p.accent}1a 0%, ${p.accent}08 100%)`
-          : "linear-gradient(150deg, #161616 0%, #111 100%)",
-        cursor:"pointer",
-        transition:"all 0.25s ease",
-        boxShadow: active ? `0 0 28px ${p.accent}20, inset 0 1px 0 ${p.accent}30` : "inset 0 1px 0 #ffffff08",
-        position:"relative", overflow:"hidden"
-      }}>
-        {/* shimmer top */}
-        <div style={{
-          position:"absolute", top:0, left:"15%", right:"15%", height:1,
-          background: active ? `linear-gradient(90deg, transparent, ${p.accent}70, transparent)` : "transparent",
-          transition:"all 0.25s"
-        }}/>
-        {/* avatar */}
-        <div style={{
-          width:52, height:52, borderRadius:"50%",
-          background: active
-            ? `radial-gradient(circle at 38% 38%, ${p.accent}50, ${p.accent}18)`
-            : "radial-gradient(circle at 38% 38%, #252525, #181818)",
-          border:`2px solid ${active ? p.accent+"70" : "#3a3a3a"}`,
-          display:"flex", alignItems:"center", justifyContent:"center",
-          fontSize:22, fontFamily:"'Libre Baskerville',serif", fontWeight:700,
-          color: active ? p.accent : "#3a3a3a",
-          boxShadow: active ? `0 4px 20px ${p.accent}28` : "none",
-          transition:"all 0.25s", flexShrink:0
-        }}>{o[0]}</div>
-        {/* name */}
-        <div style={{
-          fontSize:11, letterSpacing:"0.22em", fontWeight:700,
-          fontFamily:"'Space Mono',monospace",
-          color: active ? p.accent : "#909090"
-        }}>{o.toUpperCase()}</div>
-        {/* badge */}
-        {showCount ? (
-          <div style={{
-            fontSize:10, padding:"3px 12px", borderRadius:20,
-            background: active ? p.accent+"25" : "#1a1a1a",
-            color: active ? p.accent : "#888888",
-            border:`1px solid ${active ? p.accent+"40" : "#252525"}`,
-            fontFamily:"'Space Mono',monospace", letterSpacing:"0.05em"
-          }}>{cnt} doc{cnt!==1?"s":""}</div>
-        ) : (
-          <div style={{
-            fontSize:9, padding:"3px 10px", borderRadius:20,
-            background: active ? p.accent+"20" : "#1a1a1a",
-            color: active ? p.accent+"cc" : "#888888",
-            border:`1px solid ${active ? p.accent+"35" : "#252525"}`,
-            fontFamily:"'Space Mono',monospace", letterSpacing:"0.08em"
-          }}>{unlocked ? "✓ desbloqueado" : "🔒 bloqueado"}</div>
-        )}
-      </button>
-    );
-  };
-
-  // ════════════════════════════════════════════════════════════════════════════
-  // LOGIN SCREEN
-  // ════════════════════════════════════════════════════════════════════════════
-  if (screen==="login") return (
-    <div style={{minHeight:"100vh",background:"#0D0D0D",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Space Mono',monospace",padding:16}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
-        input{background:#1a1a1a!important;border:1px solid #2a2a2a!important;color:#e5e0d8!important;border-radius:6px;padding:14px 16px;font-family:'Space Mono',monospace;font-size:18px;outline:none;width:100%;letter-spacing:0.25em;text-align:center;}
-        input:focus{border-color:var(--acc)!important;box-shadow:0 0 0 3px var(--acc-dim);}
-        .unlock-btn{transition:all 0.2s;} .unlock-btn:hover{filter:brightness(1.1);}
-      `}</style>
-
-      <div style={{width:"100%",maxWidth:520}}>
-        {/* Logo */}
-        <div style={{textAlign:"center",marginBottom:36}}>
-          <div style={{fontSize:10,letterSpacing:"0.3em",color:"#777777",marginBottom:10}}>BÓVEDA PERSONAL</div>
-          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:32,color:"#E5E0D8",letterSpacing:"-0.01em"}}>DocVault</div>
-          <div style={{width:40,height:1,background:"linear-gradient(90deg,transparent,#444,transparent)",margin:"12px auto 0"}}/>
-        </div>
-
-        {/* Owner cards */}
-        <div style={{display:"flex",gap:12,marginBottom:28,justifyContent:"center"}}>
-          {OWNERS.map(o => (
-            <OwnerCard key={o} o={o} onClick={()=>{setOwner(o);setPinInput("");setPinError("");}} />
-          ))}
-        </div>
-
-        {/* PIN input */}
-        <div style={{"--acc":pal.accent,"--acc-dim":pal.dim} as any}>
-          <div style={{fontSize:9,color:"#888888",letterSpacing:"0.2em",marginBottom:8,textAlign:"center"}}>
-            PIN DE {owner.toUpperCase()}
+      <div style={S.page}>
+        <div style={S.loginWrap}>
+          <div style={S.brand}>
+            <div style={{fontSize:11,letterSpacing:"0.3em",color:"#9a8570",fontWeight:700}}>BÓVEDA PERSONAL</div>
+            <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:38,color:"#2a2215",marginTop:6,fontStyle:"italic"}}>DocVault</div>
           </div>
-          <input
-            type="password" value={pinInput}
-            onChange={e=>setPinInput(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&unlock()}
-            placeholder="••••" autoFocus
-          />
-          {pinError && (
-            <div style={{fontSize:11,color:"#f87171",textAlign:"center",marginTop:8,letterSpacing:"0.05em"}}>{pinError}</div>
-          )}
-        </div>
 
-        <button className="unlock-btn" onClick={unlock} disabled={syncing} style={{
-          width:"100%", marginTop:14, padding:"13px 0", borderRadius:8, border:"none",
-          cursor:syncing?"not-allowed":"pointer",
-          background: `linear-gradient(135deg, ${pal.accent}, ${pal.accent}cc)`,
-          color:"#0D0D0D", fontSize:11, fontFamily:"'Space Mono',monospace",
-          fontWeight:700, letterSpacing:"0.18em",
-          boxShadow:`0 4px 20px ${pal.accent}30`,
-          opacity:syncing?0.6:1
-        }}>{syncing?"CONECTANDO…":"ABRIR BÓVEDA"}</button>
+          <div style={S.ownerRow}>
+            {OWNERS.map(o => {
+              const p = PAL[o];
+              const active = o === owner;
+              return (
+                <button key={o} onClick={() => setOwner(o)}
+                  style={{
+                    ...S.ownerBtn,
+                    background: active ? p.tint : "#ffffff",
+                    borderColor: active ? p.accent : "#e8dfd0",
+                    boxShadow: active ? `0 4px 12px ${p.accent}33` : "0 1px 3px #00000010",
+                    transform: active ? "translateY(-2px)" : "none",
+                  }}>
+                  <div style={{fontSize:28}}>{p.emoji}</div>
+                  <div style={{fontSize:11,letterSpacing:"0.15em",color:active?p.ink:"#8a7a65",fontWeight:700,marginTop:4}}>{o.toUpperCase()}</div>
+                </button>
+              );
+            })}
+          </div>
 
-        <div style={{textAlign:"center",marginTop:14,fontSize:10,color:"#888888"}}>
-          Primera vez → tu PIN crea la bóveda
+          <div style={{...S.card, borderColor: pal.light}}>
+            <div style={{fontSize:10,letterSpacing:"0.25em",color:pal.ink,fontWeight:700,marginBottom:10}}>
+              PIN DE {owner.toUpperCase()}
+            </div>
+            <input
+              type="password"
+              value={pinInput}
+              onChange={e => setPinInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && login()}
+              placeholder="••••"
+              autoFocus
+              style={{
+                ...S.pinInput,
+                borderColor: pal.light,
+                color: pal.ink,
+              }}/>
+            {pinError && <div style={S.err}>{pinError}</div>}
+            <button onClick={login} disabled={syncing}
+              style={{
+                ...S.primaryBtn,
+                background: `linear-gradient(135deg, ${pal.accent}, ${pal.light})`,
+                opacity: syncing ? 0.6 : 1,
+                cursor: syncing ? "wait" : "pointer",
+              }}>
+              {syncing ? "ABRIENDO…" : "ABRIR BÓVEDA"}
+            </button>
+            <div style={{fontSize:10,color:"#a89680",marginTop:14,textAlign:"center",fontStyle:"italic"}}>
+              Primera vez → tu PIN crea la bóveda
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // APP SCREEN
-  // ════════════════════════════════════════════════════════════════════════════
+  // ─────────────────────────────────────────────────────────────────────────
+  // PANTALLA APP
+  // ─────────────────────────────────────────────────────────────────────────
+  const total = Object.values(vaultData[owner]).reduce((n, arr) => n + arr.length, 0);
+
   return (
-    <div style={{minHeight:"100vh",background:"#0D0D0D",color:"#E5E0D8",fontFamily:"'Space Mono',monospace"}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
-        .sli{animation:sli .2s ease forwards}
-        @keyframes sli{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-        .tin{animation:tin .2s ease,tout .3s ease 2.2s forwards}
-        @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes tout{from{opacity:1}to{opacity:0}}
-        .drow{transition:transform .15s}.drow:hover{transform:translateX(3px)}
-        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        input,textarea,select{background:#1A1A1A!important;border:1px solid #2A2A2A!important;color:#E5E0D8!important;border-radius:4px;padding:8px 10px;font-family:'Space Mono',monospace;font-size:13px;outline:none;width:100%}
-        input:focus,textarea:focus,select:focus{border-color:var(--acc)!important}
-        select option{background:#1A1A1A}
-        .ocard{transition:all .25s ease} .ocard:hover{transform:translateY(-2px)}
-      `}</style>
+    <div style={S.page}>
+      {/* HEADER */}
+      <div style={{...S.header, background: `linear-gradient(180deg, ${pal.tint} 0%, #FBF7EF 100%)`, borderBottom:`1px solid ${pal.light}44`}}>
+        <div style={S.headerInner}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{fontSize:10,letterSpacing:"0.3em",color:pal.ink,fontWeight:700}}>BÓVEDA · {owner.toUpperCase()}</div>
+              <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:28,color:"#2a2215",fontStyle:"italic",marginTop:2}}>DocVault</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+              <div style={{fontSize:11,color:pal.ink,fontWeight:600}}>{total} doc{total!==1?"s":""}</div>
+              {syncing && <div style={{fontSize:9,color:pal.accent,letterSpacing:"0.15em",fontWeight:600}}>SINCRONIZANDO…</div>}
+              {installPrompt && (
+                <button onClick={async () => {
+                  installPrompt.prompt();
+                  const {outcome} = await installPrompt.userChoice;
+                  if (outcome === "accepted") setInstallPrompt(null);
+                }} style={{...S.chip, borderColor: pal.accent, color: pal.ink, background:"#fff"}}>
+                  ⬇ Instalar
+                </button>
+              )}
+            </div>
+          </div>
 
-      {toast&&(
-        <div className="tin" style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:60,padding:"10px 20px",borderRadius:6,fontSize:12,letterSpacing:"0.08em",background:toast.err?"#2d0a0a":"#1a1a1a",border:`1px solid ${toast.err?"#7f1d1d":"#333"}`,color:toast.err?"#fca5a5":"#d4d4d4"}}>
+          {/* Owner switcher en cápsulas */}
+          <div style={{display:"flex",gap:8,marginTop:18,justifyContent:"center"}}>
+            {OWNERS.map(o => {
+              const p = PAL[o];
+              const active = o === owner;
+              return (
+                <button key={o} onClick={() => switchOwner(o)}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 999,
+                    border: `1.5px solid ${active ? p.accent : "#e8dfd0"}`,
+                    background: active ? p.tint : "#fff",
+                    color: active ? p.ink : "#8a7a65",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    cursor: "pointer",
+                    display:"flex",
+                    alignItems:"center",
+                    gap:6,
+                  }}>
+                  <span style={{fontSize:14}}>{p.emoji}</span>
+                  <span>{o.toUpperCase()}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* CATEGORÍAS */}
+      <div style={S.content}>
+        {CATEGORIES.map(cat => {
+          const files = vaultData[owner][cat.id] || [];
+          const isOpen = openCat === cat.id;
+          return (
+            <CategorySection
+              key={cat.id}
+              cat={cat}
+              files={files}
+              isOpen={isOpen}
+              pal={pal}
+              uploading={uploading}
+              onToggle={() => setOpenCat(isOpen ? null : cat.id)}
+              onAddFiles={(fs) => addFiles(cat.id, fs)}
+              onEdit={(fid) => setEditing({catId: cat.id, fileId: fid})}
+              onDownload={download}
+            />
+          );
+        })}
+
+        <div style={{textAlign:"center",padding:"28px 0 12px",color:"#a89680",fontSize:10,letterSpacing:"0.2em",fontWeight:600}}>
+          🔒 CIFRADO EXTREMO · {total} ARCHIVO{total!==1?"S":""}
+        </div>
+        <div style={{textAlign:"center",paddingBottom:40}}>
+          <button onClick={logout} style={{...S.chip, borderColor:"#d4c5a8", color:"#8a7a65", background:"#fff"}}>
+            CERRAR BÓVEDA
+          </button>
+        </div>
+      </div>
+
+      {/* EDIT SHEET */}
+      {editing && (() => {
+        const file = (vaultData[owner][editing.catId] || []).find(f => f.id === editing.fileId);
+        if (!file) return null;
+        return (
+          <EditSheet
+            file={file}
+            pal={pal}
+            onClose={() => setEditing(null)}
+            onRename={(name) => updateFile(editing.catId, editing.fileId, {name})}
+            onNotes={(notes) => updateFile(editing.catId, editing.fileId, {notes})}
+            onDownload={() => download(file)}
+            onDelete={() => deleteFile(editing.catId, editing.fileId)}
+          />
+        );
+      })()}
+
+      {/* TOAST */}
+      {toast && (
+        <div style={{
+          position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)",
+          padding:"12px 20px", borderRadius:12,
+          background: toast.err ? "#c2473f" : "#2a2215",
+          color:"#fff", fontSize:13, fontWeight:600, letterSpacing:"0.05em",
+          boxShadow:"0 8px 24px #00000040", zIndex:1000,
+        }}>
           {toast.msg}
         </div>
       )}
 
-      {modal&&(
-        <div onClick={e=>{if(e.target===e.currentTarget)setModal(null)}} style={{position:"fixed",inset:0,zIndex:40,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div className="sli" style={{width:"100%",maxWidth:440,margin:"0 16px",borderRadius:12,border:`1px solid ${pal.accent}55`,background:"#111",padding:24,["--acc"as any]:pal.accent}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
-              <div>
-                <div style={{fontSize:10,letterSpacing:"0.2em",color:pal.accent,marginBottom:4}}>{modal.doc?"EDITAR":"NUEVO DOCUMENTO"}</div>
-                <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:18,color:"#e5e0d8"}}>{CATEGORIES.find(c=>c.id===modal.cat)?.label}</div>
-              </div>
-              <button onClick={()=>setModal(null)} style={{background:"none",border:"none",color:"#909090",fontSize:22,cursor:"pointer",lineHeight:1}}>×</button>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              <div>
-                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>NOMBRE *</div>
-                <input ref={inputRef} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="ej. INE vigente 2025…" onKeyDown={e=>e.key==="Enter"&&submitDoc()}/>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <div>
-                  <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>TIPO</div>
-                  <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{DOC_TYPES.map(t=><option key={t}>{t}</option>)}</select>
-                </div>
-                <div>
-                  <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>FECHA</div>
-                  <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
-                </div>
-              </div>
-              <div>
-                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>VENCIMIENTO</div>
-                <input type="date" value={form.expires} onChange={e=>setForm(f=>({...f,expires:e.target.value}))}/>
-              </div>
-              <div>
-                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>NOTAS</div>
-                <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Folio, ubicación física…" rows={2} style={{resize:"none"}}/>
-              </div>
-              <div>
-                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:6}}>ARCHIVOS ADJUNTOS</div>
+      <style jsx global>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      `}</style>
+    </div>
+  );
+}
 
-                {/* Archivos ya guardados (edición) */}
-                {(modal.doc?.files||[]).length>0&&(
-                  <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:8}}>
-                    {(modal.doc!.files||[]).map(f=>(
-                      <div key={f.path} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:5,background:"#141414",border:"1px solid #2a2a2a"}}>
-                        <span style={{fontSize:13}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
-                        <div style={{flex:1,fontSize:11,color:"#cccccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
-                        <span style={{fontSize:9,color:"#666"}}>{(f.size/1024).toFixed(0)}KB</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+// ─── CATEGORY SECTION ──────────────────────────────────────────────────────
+function CategorySection({cat, files, isOpen, pal, uploading, onToggle, onAddFiles, onEdit, onDownload}:{
+  cat: {id:string;icon:string;label:string;sub:string};
+  files: DocFile[];
+  isOpen: boolean;
+  pal: typeof PAL[Owner];
+  uploading: Set<string>;
+  onToggle: () => void;
+  onAddFiles: (files: File[]) => void;
+  onEdit: (fileId: string) => void;
+  onDownload: (f: DocFile) => void;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const camRef  = useRef<HTMLInputElement>(null);
 
-                {/* Archivos nuevos pendientes */}
-                {pendingFiles.length>0&&(
-                  <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:8}}>
-                    {pendingFiles.map((f,i)=>(
-                      <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 10px",borderRadius:5,background:`${pal.accent}10`,border:`1px solid ${pal.accent}30`}}>
-                        <span style={{fontSize:13}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
-                        <div style={{flex:1,fontSize:11,color:pal.accent,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
-                        <span style={{fontSize:9,color:pal.accent+"99"}}>{(f.size/1024).toFixed(0)}KB</span>
-                        <button onClick={()=>setPendingFiles(prev=>prev.filter((_,j)=>j!==i))}
-                          style={{background:"none",border:"none",color:"#666",cursor:"pointer",fontSize:11,padding:"0 4px"}}
-                          onMouseEnter={e=>(e.currentTarget.style.color="#f87171")}
-                          onMouseLeave={e=>(e.currentTarget.style.color="#666")}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    setDragOver(false);
+    if (e.dataTransfer.files.length > 0) {
+      onAddFiles(Array.from(e.dataTransfer.files));
+    }
+  };
 
-                {/* Drop zone */}
-                <label
-                  onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor=pal.accent;e.currentTarget.style.background=pal.dim;}}
-                  onDragLeave={e=>{e.currentTarget.style.borderColor=pal.accent+"50";e.currentTarget.style.background=`${pal.accent}08`;}}
-                  onDrop={e=>{
-                    e.preventDefault();
-                    e.currentTarget.style.borderColor=pal.accent+"50";
-                    e.currentTarget.style.background=`${pal.accent}08`;
-                    const newFiles = Array.from(e.dataTransfer.files).filter(f=>f.size<=10*1024*1024);
-                    setPendingFiles(prev=>[...prev,...newFiles]);
-                  }}
-                  style={{
-                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,
-                    padding:"16px 12px",borderRadius:8,cursor:"pointer",textAlign:"center",
-                    border:`1px dashed ${pal.accent}50`,
-                    background:`${pal.accent}08`,
-                    transition:"all 0.15s"
-                  }}>
-                  <span style={{fontSize:22}}>📎</span>
-                  <span style={{fontSize:11,color:pal.accent,fontWeight:700}}>Arrastra archivos aquí</span>
-                  <span style={{fontSize:10,color:"#888"}}>o toca para seleccionar · máx. 10MB por archivo</span>
-                  <input type="file" multiple style={{display:"none"}}
-                    onChange={e=>{
-                      if (!e.target.files) return;
-                      const newFiles = Array.from(e.target.files).filter(f=>f.size<=10*1024*1024);
-                      setPendingFiles(prev=>[...prev,...newFiles]);
-                      e.target.value="";
-                    }}/>
-                </label>
-              </div>
+  return (
+    <div style={{
+      marginBottom: 12,
+      borderRadius: 14,
+      overflow:"hidden",
+      border: `1px solid ${isOpen ? pal.light : "#e8dfd0"}`,
+      background: "#ffffff",
+      boxShadow: isOpen ? `0 4px 16px ${pal.accent}22` : "0 1px 3px #00000008",
+      transition: "all 0.2s ease",
+    }}>
+      {/* Header de categoría */}
+      <button onClick={onToggle} style={{
+        width:"100%",
+        padding: "14px 16px",
+        background: isOpen ? pal.tint : "#ffffff",
+        border:"none",
+        cursor:"pointer",
+        display:"flex",
+        alignItems:"center",
+        gap:12,
+        textAlign:"left",
+      }}>
+        <div style={{
+          width:38, height:38, borderRadius:10,
+          background: pal.tint,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:18, color: pal.accent,
+          border: `1px solid ${pal.light}`,
+        }}>{cat.icon}</div>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:16,color:"#2a2215",fontWeight:700}}>{cat.label}</div>
+          <div style={{fontSize:11,color:"#8a7a65",marginTop:2}}>{cat.sub}</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+          <div style={{
+            background: files.length > 0 ? pal.accent : "#e8dfd0",
+            color: files.length > 0 ? "#fff" : "#8a7a65",
+            fontSize:11, fontWeight:700, letterSpacing:"0.05em",
+            padding:"3px 9px", borderRadius:999, minWidth:24, textAlign:"center",
+          }}>{files.length}</div>
+          <div style={{fontSize:14,color:pal.accent,marginTop:2}}>{isOpen ? "−" : "+"}</div>
+        </div>
+      </button>
+
+      {/* Contenido expandido */}
+      {isOpen && (
+        <div style={{padding:"4px 12px 14px", background:"#fbf8f2"}}>
+          {/* Lista de archivos */}
+          {files.length > 0 && (
+            <div style={{marginBottom:10}}>
+              {files.map(f => (
+                <FileRow key={f.id} file={f} pal={pal} uploading={uploading.has(f.id)}
+                  onEdit={() => onEdit(f.id)} onDownload={() => onDownload(f)} />
+              ))}
             </div>
-            <div style={{display:"flex",gap:8,marginTop:20}}>
-              <button onClick={submitDoc} disabled={!!uploading} style={{flex:1,padding:"10px 0",borderRadius:6,border:"none",cursor:uploading?"not-allowed":"pointer",background:`linear-gradient(135deg,${pal.accent},${pal.accent}cc)`,color:"#0D0D0D",fontSize:11,fontFamily:"'Space Mono',monospace",fontWeight:700,letterSpacing:"0.15em",opacity:uploading?0.7:1}}>
-                {uploading ? "SUBIENDO ARCHIVOS…" : modal.doc ? "ACTUALIZAR" : "GUARDAR"}
-              </button>
-              <button onClick={()=>setModal(null)} style={{padding:"10px 16px",borderRadius:6,border:"1px solid #333",cursor:"pointer",background:"transparent",color:"#bbbbbb",fontSize:11,fontFamily:"'Space Mono',monospace"}}>CANCELAR</button>
+          )}
+
+          {/* Dropzone */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOver(true); }}
+            onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragOver(false); }}
+            onDrop={handleDrop}
+            style={{
+              border: `2px dashed ${dragOver ? pal.accent : pal.light}`,
+              borderRadius: 12,
+              padding: "22px 16px",
+              background: dragOver ? pal.tint : "#ffffff",
+              textAlign:"center",
+              transition:"all 0.15s ease",
+            }}>
+            <div style={{fontSize:22,color:pal.accent,marginBottom:6}}>⇪</div>
+            <div style={{fontSize:13,color:pal.ink,fontWeight:700,letterSpacing:"0.05em",marginBottom:3}}>
+              Arrastra archivos aquí
             </div>
+            <div style={{fontSize:11,color:"#8a7a65",marginBottom:12}}>
+              o usa los botones de abajo
+            </div>
+            <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+              <button onClick={() => fileRef.current?.click()} style={{
+                padding:"8px 14px", borderRadius:8,
+                border:`1px solid ${pal.light}`,
+                background:"#fff", color: pal.ink,
+                fontSize:11, fontWeight:700, letterSpacing:"0.1em",
+                cursor:"pointer",
+              }}>📎 ARCHIVO</button>
+              <button onClick={() => camRef.current?.click()} style={{
+                padding:"8px 14px", borderRadius:8,
+                border:`1px solid ${pal.light}`,
+                background:"#fff", color: pal.ink,
+                fontSize:11, fontWeight:700, letterSpacing:"0.1em",
+                cursor:"pointer",
+              }}>📷 CÁMARA</button>
+            </div>
+            <input ref={fileRef} type="file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
+              style={{display:"none"}}
+              onChange={(e) => {
+                if (!e.target.files) return;
+                onAddFiles(Array.from(e.target.files));
+                e.target.value = "";
+              }}/>
+            <input ref={camRef} type="file" accept="image/*" capture="environment"
+              style={{display:"none"}}
+              onChange={(e) => {
+                if (!e.target.files) return;
+                onAddFiles(Array.from(e.target.files));
+                e.target.value = "";
+              }}/>
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Header */}
-      <div style={{background:"#0A0A0A",borderBottom:"1px solid #1a1a1a"}}>
-        <div style={{maxWidth:600,margin:"0 auto",padding:"20px 16px"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-            <div>
-              <div style={{fontSize:10,letterSpacing:"0.25em",color:"#777777",marginBottom:4}}>BÓVEDA PERSONAL</div>
-              <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:26,color:"#E5E0D8"}}>DocVault</div>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
-              <div style={{fontSize:10,color:"#888888"}}>{total} doc{total!==1?"s":""}</div>
-              {installPrompt&&(
-                <button onClick={async()=>{installPrompt.prompt();const{outcome}=await installPrompt.userChoice;if(outcome==="accepted")setInstallPrompt(null);}} style={{padding:"6px 12px",borderRadius:6,border:`1px solid ${pal.accent}60`,background:pal.dim,color:pal.accent,fontSize:10,cursor:"pointer",fontFamily:"'Space Mono',monospace",letterSpacing:"0.1em"}}>
-                  ⬇ Instalar App
-                </button>
-              )}
-              {saving&&<div style={{fontSize:9,color:"#888888",letterSpacing:"0.1em"}}>sincronizando…</div>}
-            </div>
-          </div>
+// ─── FILE ROW ──────────────────────────────────────────────────────────────
+function FileRow({file, pal, uploading, onEdit, onDownload}:{
+  file: DocFile;
+  pal: typeof PAL[Owner];
+  uploading: boolean;
+  onEdit: () => void;
+  onDownload: () => void;
+}) {
+  const icon = file.mime === "application/pdf" ? "📄" : file.mime.startsWith("image/") ? "🖼" : "📎";
+  const kb = file.size < 1024*1024 ? `${(file.size/1024).toFixed(0)} KB` : `${(file.size/1024/1024).toFixed(1)} MB`;
 
-          {/* Owner cards — centered, with avatar */}
-          <div style={{display:"flex",gap:12,marginTop:20,justifyContent:"center"}}>
-            {OWNERS.map(o => (
-              <OwnerCard key={o} o={o} onClick={()=>switchOwner(o)} showCount />
-            ))}
-          </div>
-
-          {/* Search */}
-          <div style={{marginTop:14,position:"relative"}}>
-            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#888888",fontSize:14}}>⌕</span>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar categoría o documento…" style={{paddingLeft:30}}/>
-          </div>
+  return (
+    <div style={{
+      display:"flex",
+      alignItems:"center",
+      gap:10,
+      padding:"10px 12px",
+      background:"#fff",
+      borderRadius:10,
+      border:"1px solid #f0e9dc",
+      marginBottom:6,
+      animation:"fadeIn 0.2s ease",
+    }}>
+      <div style={{fontSize:18}}>{icon}</div>
+      <div style={{flex:1, minWidth:0, cursor:"pointer"}} onClick={onEdit}>
+        <div style={{
+          fontSize:13, color:"#2a2215", fontWeight:600,
+          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+        }}>{file.name}</div>
+        <div style={{fontSize:10,color:"#a89680",marginTop:2,letterSpacing:"0.05em"}}>
+          {kb} · {file.notes ? "📝 " + file.notes.substring(0,30) + (file.notes.length>30?"…":"") : "sin notas"}
         </div>
       </div>
+      {uploading ? (
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,letterSpacing:"0.05em"}}>
+          <span style={{display:"inline-block",animation:"spin 0.8s linear infinite"}}>⟳</span>
+        </div>
+      ) : (
+        <button onClick={onDownload} style={{
+          padding:"6px 10px", borderRadius:8,
+          border:`1px solid ${pal.light}`,
+          background: pal.tint, color: pal.ink,
+          fontSize:10, fontWeight:700, letterSpacing:"0.08em",
+          cursor:"pointer",
+        }}>⬇</button>
+      )}
+    </div>
+  );
+}
 
-      {/* Categories */}
-      <div style={{maxWidth:600,margin:"0 auto",padding:"12px 16px 80px"}}>
-        {filtered.map(cat=>{
-          const catDocs = oData[cat.id]||[];
-          const isOpen  = openCat===cat.id;
-          const expiredDocs  = catDocs.filter(d=>isExpired(d));
-          const expiringDocs = catDocs.filter(d=>isExpiring(d));
-          return (
-            <div key={cat.id} style={{marginBottom:6,borderRadius:8,overflow:"hidden",border:`1px solid ${isOpen?pal.accent+"45":"#1e1e1e"}`,background:isOpen?"#111":"#0D0D0D"}}>
-              <button onClick={()=>setOpenCat(isOpen?null:cat.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"13px 14px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left"}}>
-                <span style={{fontSize:17,color:isOpen?pal.accent:"#888888",minWidth:20}}>{cat.icon}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <span style={{fontSize:13,color:isOpen?"#e5e0d8":"#cccccc"}}>{cat.label}</span>
-                    {catDocs.length>0&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:pal.dim,color:pal.accent,border:`1px solid ${pal.accent}35`}}>{catDocs.length}</span>}
-                    {expiredDocs.length>0&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#2d0a0a",color:"#f87171",border:"1px solid #7f1d1d55"}}>⚠ {expiredDocs.length} vencido{expiredDocs.length>1?"s":""}</span>}
-                    {expiringDocs.length>0&&expiredDocs.length===0&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#2d1f00",color:"#fbbf24",border:"1px solid #92400e55"}}>por vencer</span>}
-                  </div>
-                  <div style={{fontSize:11,color:"#aaaaaa",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cat.sub}</div>
-                </div>
-                <span style={{color:"#888888",fontSize:10,transform:isOpen?"rotate(90deg)":"rotate(0)",transition:"transform .2s",display:"inline-block"}}>▶</span>
-              </button>
+// ─── EDIT SHEET ────────────────────────────────────────────────────────────
+function EditSheet({file, pal, onClose, onRename, onNotes, onDownload, onDelete}:{
+  file: DocFile;
+  pal: typeof PAL[Owner];
+  onClose: () => void;
+  onRename: (name: string) => void;
+  onNotes: (notes: string) => void;
+  onDownload: () => void;
+  onDelete: () => void;
+}) {
+  const [name, setName] = useState(file.name);
+  const [notes, setNotes] = useState(file.notes);
+  const nameTimer = useRef<any>(null);
+  const notesTimer = useRef<any>(null);
 
-              {isOpen&&(
-                <div className="sli" style={{padding:"0 14px 14px"}}>
-                  <div style={{borderTop:"1px solid #222",marginBottom:12}}/>
-                  {catDocs.length===0&&<div style={{fontSize:11,color:"#aaaaaa",fontStyle:"italic",textAlign:"center",padding:"8px 0 12px"}}>Sin documentos en esta categoría</div>}
-                  <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:catDocs.length?12:0}}>
-                    {catDocs.map(doc=>{
-                      const exp=isExpired(doc); const exp2=isExpiring(doc);
-                      const barColor=exp?"#ef4444":exp2?"#eab308":pal.dot;
-                      return (
-                        <div key={doc.id} className="drow"
-                          style={{display:"flex",alignItems:"flex-start",gap:10,padding:12,borderRadius:6,
-                            background:dragOver===doc.id?`${pal.accent}12`:"#141414",
-                            border:`1px solid ${dragOver===doc.id?pal.accent+"60":"#222"}`,
-                            transition:"all 0.15s"}}>
-                          <div style={{width:3,borderRadius:2,background:barColor,alignSelf:"stretch",minHeight:18,flexShrink:0}}/>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:13,color:"#e5e0d8"}}>{doc.name}</div>
-                            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
-                              <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:pal.dim,color:pal.accent,border:`1px solid ${pal.accent}30`}}>{doc.type}</span>
-                              {doc.date&&<span style={{fontSize:10,color:"#aaaaaa"}}>📅 {doc.date}</span>}
-                              {doc.expires&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:exp?"#2d0a0a":exp2?"#2d1f00":"#1a1a1a",color:exp?"#f87171":exp2?"#fbbf24":"#aaaaaa",border:`1px solid ${exp?"#7f1d1d55":exp2?"#92400e55":"#3a3a3a"}`}}>{exp?"⚠ ":"↺ "}{doc.expires}</span>}
-                            </div>
-                            {doc.notes&&<div style={{fontSize:11,color:"#aaaaaa",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{doc.notes}</div>}
+  useEffect(() => { setName(file.name); setNotes(file.notes); }, [file.id]);
 
-                            {/* Archivos adjuntos */}
-                            {(doc.files||[]).length>0&&(
-                              <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:4}}>
-                                {(doc.files||[]).map(f=>(
-                                  <div key={f.path} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a"}}>
-                                    <span style={{fontSize:15,flexShrink:0}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
-                                    <div style={{flex:1,minWidth:0}}>
-                                      <div style={{fontSize:11,color:"#cccccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
-                                      <div style={{fontSize:9,color:"#888"}}>{(f.size/1024).toFixed(0)} KB</div>
-                                    </div>
-                                    <button onClick={()=>downloadFile(f.path,f.name)}
-                                      style={{background:"none",border:`1px solid #333`,borderRadius:4,cursor:"pointer",fontSize:12,padding:"3px 8px",color:"#aaa",display:"flex",alignItems:"center",gap:4}}
-                                      onMouseEnter={e=>{e.currentTarget.style.color=pal.accent;e.currentTarget.style.borderColor=pal.accent;}}
-                                      onMouseLeave={e=>{e.currentTarget.style.color="#aaa";e.currentTarget.style.borderColor="#333";}}
-                                      title="Descargar">⬇ <span style={{fontSize:10}}>Bajar</span></button>
-                                    <button onClick={()=>deleteFile(cat.id,doc.id,f.path)}
-                                      style={{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px 5px",color:"#555"}}
-                                      onMouseEnter={e=>(e.currentTarget.style.color="#f87171")}
-                                      onMouseLeave={e=>(e.currentTarget.style.color="#555")}
-                                      title="Eliminar">✕</button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+  const saveName = (v: string) => {
+    setName(v);
+    if (nameTimer.current) clearTimeout(nameTimer.current);
+    nameTimer.current = setTimeout(() => {
+      if (v.trim() && v.trim() !== file.name) onRename(v.trim());
+    }, 500);
+  };
+  const saveNotes = (v: string) => {
+    setNotes(v);
+    if (notesTimer.current) clearTimeout(notesTimer.current);
+    notesTimer.current = setTimeout(() => {
+      if (v !== file.notes) onNotes(v);
+    }, 500);
+  };
 
-                            {/* Zona drag & drop — handlers aquí para que PC funcione */}
-                            <label
-                              onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOver(doc.id);}}
-                              onDragLeave={e=>{e.preventDefault();setDragOver(null);}}
-                              onDrop={e=>{e.preventDefault();e.stopPropagation();setDragOver(null);handleFiles(cat.id,doc.id,e.dataTransfer.files);}}
-                              style={{
-                                marginTop:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                                padding:"10px 12px", borderRadius:6, cursor:"pointer",
-                                border:`1px dashed ${dragOver===doc.id?pal.accent:pal.accent+"50"}`,
-                                color:dragOver===doc.id?pal.accent:pal.accent+"cc",
-                                background:dragOver===doc.id?pal.dim:`${pal.accent}08`,
-                                fontSize:11, transition:"all 0.15s",
-                                opacity:uploading===doc.id?0.6:1
-                              }}>
-                              {uploading===doc.id
-                                ? <><span style={{display:"inline-block",animation:"spin 0.8s linear infinite",fontSize:14}}>⟳</span> Subiendo…</>
-                                : <><span style={{fontSize:14}}>📎</span> <span>Arrastra o toca para adjuntar</span></>
-                              }
-                              <input type="file" multiple style={{display:"none"}}
-                                onChange={e=>e.target.files&&handleFiles(cat.id,doc.id,e.target.files)}
-                                disabled={!!uploading}/>
-                            </label>
-                          </div>
-                          <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-                            <button onClick={()=>openEdit(cat.id,doc)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#ccc")} onMouseLeave={e=>(e.currentTarget.style.color="#909090")}>✎</button>
-                            <button onClick={()=>deleteDoc(cat.id,doc.id)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#f87171")} onMouseLeave={e=>(e.currentTarget.style.color="#909090")}>✕</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <button onClick={()=>openAdd(cat.id)} style={{width:"100%",padding:"10px 0",borderRadius:6,border:`1px solid ${pal.accent}45`,background:pal.dim,color:pal.accent,cursor:"pointer",fontSize:11,fontFamily:"'Space Mono',monospace",letterSpacing:"0.15em"}}>
-                    + AGREGAR DOCUMENTO
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {filtered.length===0&&<div style={{textAlign:"center",padding:"48px 0",color:"#888888",fontSize:12}}>Sin resultados para "{search}"</div>}
-      </div>
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position:"fixed", inset:0,
+        background:"#2a221580", zIndex:500,
+        display:"flex", alignItems:"flex-end", justifyContent:"center",
+      }}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width:"100%", maxWidth:600,
+          background:"#FDFAF3",
+          borderRadius:"20px 20px 0 0",
+          padding:"16px 20px 24px",
+          animation:"slideUp 0.25s ease",
+          boxShadow:"0 -8px 24px #00000020",
+        }}>
+        <div style={{width:40, height:4, background:"#d4c5a8", borderRadius:2, margin:"0 auto 14px"}}/>
 
-      {/* Footer */}
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0A0A0A",borderTop:"1px solid #1a1a1a",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{fontSize:10,color:"#aaaaaa"}}>DocVault · {owner} · <span style={{color:"#4EADA0"}}>☁ cloud</span></span>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <button onClick={()=>{
-            setKeys({Rolo:null,Claudia:null,Castle:null});
-            setSalts({Rolo:"",Claudia:"",Castle:""});
-            setVaultIds({Rolo:"",Claudia:"",Castle:""});
-            setVaultData({Rolo:{},Claudia:{},Castle:{}});
-            setOwner("Rolo"); setScreen("login"); setPinInput(""); setPinError("");
-          }} style={{fontSize:10,color:"#555",background:"none",border:"none",cursor:"pointer",letterSpacing:"0.1em",fontFamily:"'Space Mono',monospace"}}
-            onMouseEnter={e=>(e.currentTarget.style.color="#aaa")}
-            onMouseLeave={e=>(e.currentTarget.style.color="#555")}>
-            ⎋ salir
-          </button>
-          <span style={{fontSize:10,color:pal.accent}}>● {total} docs</span>
+        <div style={{fontSize:10,letterSpacing:"0.25em",color:pal.ink,fontWeight:700,marginBottom:4}}>
+          EDITAR ARCHIVO
+        </div>
+
+        <input
+          value={name}
+          onChange={(e) => saveName(e.target.value)}
+          placeholder="Nombre del archivo"
+          style={{
+            width:"100%", padding:"10px 12px",
+            border:`1px solid ${pal.light}`,
+            borderRadius:10,
+            fontSize:16,
+            fontFamily:"'Libre Baskerville',serif",
+            color:"#2a2215",
+            background:"#fff",
+            marginBottom:12,
+            boxSizing:"border-box",
+          }}/>
+
+        <div style={{fontSize:10,letterSpacing:"0.2em",color:"#8a7a65",fontWeight:700,marginBottom:6}}>
+          NOTAS
+        </div>
+        <textarea
+          value={notes}
+          onChange={(e) => saveNotes(e.target.value)}
+          placeholder="Detalles, vigencia, número de folio…"
+          rows={4}
+          style={{
+            width:"100%", padding:"10px 12px",
+            border:`1px solid ${pal.light}`,
+            borderRadius:10,
+            fontSize:13,
+            color:"#2a2215",
+            background:"#fff",
+            fontFamily:"inherit",
+            resize:"none",
+            boxSizing:"border-box",
+            marginBottom:14,
+          }}/>
+
+        <div style={{fontSize:10,color:"#a89680",marginBottom:12,letterSpacing:"0.05em"}}>
+          {(file.size/1024).toFixed(0)} KB · {file.mime} · {new Date(file.uploaded).toLocaleDateString("es-MX")}
+        </div>
+
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={onDownload} style={{
+            flex:1, padding:"12px 0", borderRadius:10,
+            border:"none",
+            background:`linear-gradient(135deg, ${pal.accent}, ${pal.light})`,
+            color:"#fff", fontSize:12, fontWeight:700, letterSpacing:"0.1em",
+            cursor:"pointer",
+          }}>⬇ DESCARGAR</button>
+          <button onClick={onDelete} style={{
+            padding:"12px 16px", borderRadius:10,
+            border:"1px solid #d4a8a8",
+            background:"#fff", color:"#a84747",
+            fontSize:12, fontWeight:700, letterSpacing:"0.1em",
+            cursor:"pointer",
+          }}>🗑</button>
+          <button onClick={onClose} style={{
+            padding:"12px 16px", borderRadius:10,
+            border:"1px solid #d4c5a8",
+            background:"#fff", color:"#8a7a65",
+            fontSize:12, fontWeight:700, letterSpacing:"0.1em",
+            cursor:"pointer",
+          }}>CERRAR</button>
         </div>
       </div>
     </div>
   );
 }
+
+// ─── ESTILOS ───────────────────────────────────────────────────────────────
+const S: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight:"100vh",
+    background:"#FBF7EF",
+    fontFamily:"system-ui, -apple-system, sans-serif",
+    color:"#2a2215",
+  },
+  loginWrap: {
+    maxWidth:420, margin:"0 auto", padding:"60px 20px 40px",
+  },
+  brand: {
+    textAlign:"center", marginBottom:30,
+  },
+  ownerRow: {
+    display:"flex", gap:10, marginBottom:22, justifyContent:"center",
+  },
+  ownerBtn: {
+    flex:1, maxWidth:110,
+    padding:"14px 8px",
+    border:"2px solid",
+    borderRadius:14,
+    cursor:"pointer",
+    transition:"all 0.2s ease",
+  },
+  card: {
+    background:"#fff",
+    border:"1px solid",
+    borderRadius:16,
+    padding:"22px 20px",
+    boxShadow:"0 4px 16px #00000010",
+  },
+  pinInput: {
+    width:"100%", padding:"12px 14px",
+    border:"1.5px solid",
+    borderRadius:10,
+    fontSize:22,
+    textAlign:"center",
+    letterSpacing:"0.5em",
+    background:"#fbf7ef",
+    boxSizing:"border-box",
+    fontFamily:"'Space Mono',monospace",
+    outline:"none",
+  },
+  err: {
+    fontSize:11, color:"#c2473f", textAlign:"center",
+    marginTop:8, letterSpacing:"0.05em", fontWeight:600,
+  },
+  primaryBtn: {
+    width:"100%", padding:"13px 0",
+    border:"none", borderRadius:10,
+    color:"#fff", fontSize:12, fontWeight:700,
+    letterSpacing:"0.2em",
+    cursor:"pointer",
+    marginTop:14,
+  },
+  header: {
+    position:"sticky", top:0, zIndex:100,
+  },
+  headerInner: {
+    maxWidth:600, margin:"0 auto", padding:"18px 16px",
+  },
+  chip: {
+    padding:"5px 11px",
+    borderRadius:999,
+    border:"1px solid",
+    fontSize:10,
+    fontWeight:700,
+    letterSpacing:"0.1em",
+    cursor:"pointer",
+  },
+  content: {
+    maxWidth:600, margin:"0 auto", padding:"16px 14px 0",
+  },
+};
