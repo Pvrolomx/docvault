@@ -1,4 +1,4 @@
-const CACHE_NAME = 'docvault-v2';
+const CACHE_NAME = 'docvault-v3';
 const STATIC_ASSETS = ['/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -18,21 +18,31 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  const url = event.request.url;
-  // Network-first para HTML y navegación
-  if (event.request.mode === 'navigate' || url.endsWith('/') || url.includes('/_next/')) {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // BYPASS TOTAL: cross-origin (Supabase, APIs externas) y métodos no-GET
+  // Esto evita que el SW rompa POSTs/PATCHes a Supabase
+  if (url.origin !== self.location.origin || req.method !== 'GET') {
+    return; // deja que el navegador maneje el fetch normal
+  }
+
+  // Network-first para HTML y navegación (con clone ANTES del return)
+  if (req.mode === 'navigate' || url.pathname === '/' || url.pathname.startsWith('/_next/')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(req)
         .then(resp => {
-          caches.open(CACHE_NAME).then(c => c.put(event.request, resp.clone()));
+          const respClone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, respClone));
           return resp;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(req))
     );
-  } else {
-    // Cache-first para assets estáticos
-    event.respondWith(
-      caches.match(event.request).then(r => r || fetch(event.request))
-    );
+    return;
   }
+
+  // Cache-first para assets estáticos
+  event.respondWith(
+    caches.match(req).then(r => r || fetch(req))
+  );
 });
