@@ -172,7 +172,20 @@ export default function DocVault() {
       let salt:string, key:CryptoKey, data:VaultData;
       if (row) {
         salt = row.salt; key = await deriveKey(pinInput, salt);
-        try { data = await decryptData(row.blob, key); }
+        try {
+          data = await decryptData(row.blob, key);
+          // Asegurar que todas las categorías actuales existen (por si se agregaron después)
+          const cats = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
+          let patched = false;
+          for (const c of cats) {
+            if (!data[c.id]) { data[c.id] = []; patched = true; }
+          }
+          // Si faltaban categorías, guardar el vault actualizado
+          if (patched) {
+            const newBlob = await encryptData(data, key);
+            await sbSave(vaultId, newBlob, salt);
+          }
+        }
         catch { setSyncing(false); setPinError("PIN incorrecto"); return; }
       } else {
         salt = await generateSalt(); key = await deriveKey(pinInput, salt);
