@@ -1,5 +1,31 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: #0D0D0D; color: #E5E0D8; font-family: 'Space Mono', monospace; }
-::-webkit-scrollbar { width: 4px; }
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #FBF7EF;
+  color: #2a2215;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+}
+
+/* Scrollbar claro */
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: #d4c5a8; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #b8a688; }
