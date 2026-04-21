@@ -81,6 +81,37 @@ async function hashPassword(password: string) {
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+async function sbUploadFile(vaultId: string, catId: string, file: File): Promise<string> {
+  const ext  = file.name.split('.').pop() || 'bin';
+  const name = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+  const path = `${vaultId}/${catId}/${name}`;
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/docvault-files/${path}`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}`, "Content-Type": file.type || "application/octet-stream" },
+    body: file,
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Upload failed'); }
+  return path;
+}
+
+async function sbGetFileUrl(path: string): Promise<string> {
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/docvault-files/${path}`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ expiresIn: 300 }),
+  });
+  const d = await r.json();
+  return `${SUPABASE_URL}/storage/v1${d.signedURL}`;
+}
+
+async function sbDeleteFile(path: string) {
+  await fetch(`${SUPABASE_URL}/storage/v1/object/docvault-files/${path}`, {
+    method: "DELETE",
+    headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` },
+  });
+}
+
 async function sbSave(vaultId: string, blob: string, salt: string) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/docvault_docs`, {
     method:"POST",
@@ -97,7 +128,8 @@ async function sbLoad(vaultId: string) {
   return rows.length ? rows[0] : null;
 }
 
-type Doc = { id:string; name:string; type:string; notes:string; date:string; expires:string; created:number };
+type FileAttachment = { name: string; path: string; size: number; type: string; uploaded: number };
+type Doc = { id:string; name:string; type:string; notes:string; date:string; expires:string; created:number; files?: FileAttachment[] };
 type VaultData = Record<string, Doc[]>;
 
 export default function DocVault() {
@@ -115,6 +147,8 @@ export default function DocVault() {
   const [search, setSearch]       = useState("");
   const [saving,  setSaving]      = useState(false);
   const [syncing, setSyncing]     = useState(false);
+  const [uploading, setUploading] = useState<string|null>(null); // docId en proceso
+  const [dragOver, setDragOver]   = useState<string|null>(null); // docId con drag encima
   const [toast,   setToast]       = useState<{msg:string;err?:boolean}|null>(null);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -192,8 +226,56 @@ export default function DocVault() {
   };
 
   const deleteDoc = async (catId:string, docId:string) => {
+    // Borrar archivos del doc primero
+    const doc = (vaultData[owner]?.[catId]||[]).find(d=>d.id===docId);
+    if (doc?.files?.length) {
+      for (const f of doc.files) { try { await sbDeleteFile(f.path); } catch {} }
+    }
     await updateOwnerData({...vaultData[owner],[catId]:(vaultData[owner]?.[catId]||[]).filter(d=>d.id!==docId)});
     showToast("Eliminado",true);
+  };
+
+  const handleFiles = async (catId:string, docId:string, files: FileList|File[]) => {
+    const fileArr = Array.from(files);
+    const vaultId = vaultIds[owner];
+    if (!vaultId) return;
+    setUploading(docId);
+    try {
+      const uploaded: FileAttachment[] = [];
+      for (const file of fileArr) {
+        if (file.size > 10 * 1024 * 1024) { showToast(`${file.name} supera 10MB`, true); continue; }
+        const path = await sbUploadFile(vaultId, catId, file);
+        uploaded.push({ name: file.name, path, size: file.size, type: file.type, uploaded: Date.now() });
+      }
+      const catDocs = vaultData[owner]?.[catId] || [];
+      const newDocs = catDocs.map(d => d.id===docId
+        ? {...d, files: [...(d.files||[]), ...uploaded]}
+        : d
+      );
+      await updateOwnerData({...vaultData[owner],[catId]:newDocs});
+      showToast(`${uploaded.length} archivo${uploaded.length!==1?"s":""} subido${uploaded.length!==1?"s":""} ✓`);
+    } catch(e:any) { showToast(e.message||"Error al subir", true); }
+    setUploading(null);
+  };
+
+  const deleteFile = async (catId:string, docId:string, filePath:string) => {
+    try { await sbDeleteFile(filePath); } catch {}
+    const catDocs = vaultData[owner]?.[catId] || [];
+    const newDocs = catDocs.map(d => d.id===docId
+      ? {...d, files:(d.files||[]).filter(f=>f.path!==filePath)}
+      : d
+    );
+    await updateOwnerData({...vaultData[owner],[catId]:newDocs});
+    showToast("Archivo eliminado",true);
+  };
+
+  const downloadFile = async (path:string, name:string) => {
+    try {
+      const url = await sbGetFileUrl(path);
+      const a = document.createElement('a');
+      a.href=url; a.download=name; a.target="_blank";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    } catch { showToast("Error al descargar",true); }
   };
 
   const switchOwner = (o:string) => {
@@ -352,6 +434,7 @@ export default function DocVault() {
         @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes tout{from{opacity:1}to{opacity:0}}
         .drow{transition:transform .15s}.drow:hover{transform:translateX(3px)}
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         input,textarea,select{background:#1A1A1A!important;border:1px solid #2A2A2A!important;color:#E5E0D8!important;border-radius:4px;padding:8px 10px;font-family:'Space Mono',monospace;font-size:13px;outline:none;width:100%}
         input:focus,textarea:focus,select:focus{border-color:var(--acc)!important}
         select option{background:#1A1A1A}
@@ -474,20 +557,71 @@ export default function DocVault() {
                       const exp=isExpired(doc); const exp2=isExpiring(doc);
                       const barColor=exp?"#ef4444":exp2?"#eab308":pal.dot;
                       return (
-                        <div key={doc.id} className="drow" style={{display:"flex",alignItems:"flex-start",gap:10,padding:12,borderRadius:6,background:"#141414",border:"1px solid #222"}}>
+                        <div key={doc.id} className="drow"
+                          onDragOver={e=>{e.preventDefault();setDragOver(doc.id);}}
+                          onDragLeave={()=>setDragOver(null)}
+                          onDrop={e=>{e.preventDefault();setDragOver(null);handleFiles(cat.id,doc.id,e.dataTransfer.files);}}
+                          style={{display:"flex",alignItems:"flex-start",gap:10,padding:12,borderRadius:6,
+                            background:dragOver===doc.id?`${pal.accent}12`:"#141414",
+                            border:`1px solid ${dragOver===doc.id?pal.accent+"60":"#222"}`,
+                            transition:"all 0.15s"}}>
                           <div style={{width:3,borderRadius:2,background:barColor,alignSelf:"stretch",minHeight:18,flexShrink:0}}/>
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{fontSize:13,color:"#e5e0d8"}}>{doc.name}</div>
                             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
                               <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:pal.dim,color:pal.accent,border:`1px solid ${pal.accent}30`}}>{doc.type}</span>
-                              {doc.date&&<span style={{fontSize:10,color:"#909090"}}>📅 {doc.date}</span>}
-                              {doc.expires&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:exp?"#2d0a0a":exp2?"#2d1f00":"#1a1a1a",color:exp?"#f87171":exp2?"#fbbf24":"#555",border:`1px solid ${exp?"#7f1d1d55":exp2?"#92400e55":"#3a3a3a"}`}}>{exp?"⚠ ":"↺ "}{doc.expires}</span>}
+                              {doc.date&&<span style={{fontSize:10,color:"#aaaaaa"}}>📅 {doc.date}</span>}
+                              {doc.expires&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:exp?"#2d0a0a":exp2?"#2d1f00":"#1a1a1a",color:exp?"#f87171":exp2?"#fbbf24":"#aaaaaa",border:`1px solid ${exp?"#7f1d1d55":exp2?"#92400e55":"#3a3a3a"}`}}>{exp?"⚠ ":"↺ "}{doc.expires}</span>}
                             </div>
-                            {doc.notes&&<div style={{fontSize:11,color:"#909090",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{doc.notes}</div>}
+                            {doc.notes&&<div style={{fontSize:11,color:"#aaaaaa",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{doc.notes}</div>}
+
+                            {/* Archivos adjuntos */}
+                            {(doc.files||[]).length>0&&(
+                              <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:4}}>
+                                {(doc.files||[]).map(f=>(
+                                  <div key={f.path} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:5,background:"#1a1a1a",border:"1px solid #2a2a2a"}}>
+                                    <span style={{fontSize:15,flexShrink:0}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
+                                    <div style={{flex:1,minWidth:0}}>
+                                      <div style={{fontSize:11,color:"#cccccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
+                                      <div style={{fontSize:9,color:"#666"}}>{(f.size/1024).toFixed(0)} KB</div>
+                                    </div>
+                                    <button onClick={()=>downloadFile(f.path,f.name)}
+                                      style={{background:"none",border:"none",cursor:"pointer",fontSize:15,padding:"2px 5px",color:"#888"}}
+                                      onMouseEnter={e=>(e.currentTarget.style.color=pal.accent)}
+                                      onMouseLeave={e=>(e.currentTarget.style.color="#888")}
+                                      title="Descargar">⬇️</button>
+                                    <button onClick={()=>deleteFile(cat.id,doc.id,f.path)}
+                                      style={{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px 5px",color:"#555"}}
+                                      onMouseEnter={e=>(e.currentTarget.style.color="#f87171")}
+                                      onMouseLeave={e=>(e.currentTarget.style.color="#555")}
+                                      title="Eliminar">✕</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Zona drag & drop / tap para subir */}
+                            <label style={{
+                              marginTop:8, display:"flex", alignItems:"center", gap:7,
+                              padding:"8px 10px", borderRadius:5, cursor:"pointer",
+                              border:`1px dashed ${dragOver===doc.id?pal.accent:"#2a2a2a"}`,
+                              color:dragOver===doc.id?pal.accent:"#777",
+                              background:dragOver===doc.id?pal.dim:"transparent",
+                              fontSize:10, transition:"all 0.15s",
+                              opacity:uploading===doc.id?0.6:1
+                            }}>
+                              {uploading===doc.id
+                                ? <><span style={{display:"inline-block",animation:"spin 0.8s linear infinite"}}>⟳</span> Subiendo…</>
+                                : <><span>📎</span> Arrastra aquí o toca para adjuntar</>
+                              }
+                              <input type="file" multiple style={{display:"none"}}
+                                onChange={e=>e.target.files&&handleFiles(cat.id,doc.id,e.target.files)}
+                                disabled={!!uploading}/>
+                            </label>
                           </div>
-                          <div style={{display:"flex",gap:4,flexShrink:0}}>
-                            <button onClick={()=>openEdit(cat.id,doc)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#ccc")} onMouseLeave={e=>(e.currentTarget.style.color="#555")}>✎</button>
-                            <button onClick={()=>deleteDoc(cat.id,doc.id)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#f87171")} onMouseLeave={e=>(e.currentTarget.style.color="#555")}>✕</button>
+                          <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+                            <button onClick={()=>openEdit(cat.id,doc)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#ccc")} onMouseLeave={e=>(e.currentTarget.style.color="#909090")}>✎</button>
+                            <button onClick={()=>deleteDoc(cat.id,doc.id)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#f87171")} onMouseLeave={e=>(e.currentTarget.style.color="#909090")}>✕</button>
                           </div>
                         </div>
                       );
