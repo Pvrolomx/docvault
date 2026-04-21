@@ -227,9 +227,15 @@ export default function DocVault() {
   const submitDoc = async () => {
     if (!form.name.trim()||!modal) return;
     const catId   = modal.cat;
-    const current = vaultData[owner]?.[catId] || [];
-    const docId   = modal.doc ? modal.doc.id : `${catId}-${Date.now()}`;
     const vaultId = vaultIds[owner];
+
+    // Asegurar que el vault tiene esta categoría (compatibilidad con vaults viejos)
+    const currentVault = vaultData[owner] || {};
+    if (!currentVault[catId]) {
+      currentVault[catId] = [];
+    }
+    const current = currentVault[catId];
+    const docId   = modal.doc ? modal.doc.id : `${catId}-${Date.now()}`;
     let updated:Doc[];
 
     // Subir archivos pendientes
@@ -736,7 +742,20 @@ export default function DocVault() {
       {/* Footer */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0A0A0A",borderTop:"1px solid #1a1a1a",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <span style={{fontSize:10,color:"#aaaaaa"}}>DocVault · {owner} · <span style={{color:"#4EADA0"}}>☁ cloud</span></span>
-        <span style={{fontSize:10,color:pal.accent}}>● {total} docs</span>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <button onClick={()=>{
+            setKeys({Rolo:null,Claudia:null,Castle:null});
+            setSalts({Rolo:"",Claudia:"",Castle:""});
+            setVaultIds({Rolo:"",Claudia:"",Castle:""});
+            setVaultData({Rolo:{},Claudia:{},Castle:{}});
+            setOwner("Rolo"); setScreen("login"); setPinInput(""); setPinError("");
+          }} style={{fontSize:10,color:"#555",background:"none",border:"none",cursor:"pointer",letterSpacing:"0.1em",fontFamily:"'Space Mono',monospace"}}
+            onMouseEnter={e=>(e.currentTarget.style.color="#aaa")}
+            onMouseLeave={e=>(e.currentTarget.style.color="#555")}>
+            ⎋ salir
+          </button>
+          <span style={{fontSize:10,color:pal.accent}}>● {total} docs</span>
+        </div>
       </div>
     </div>
   );
