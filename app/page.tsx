@@ -40,7 +40,7 @@ const CATEGORIES_CASTLE = [
 // Paleta LUMINOSA — papel crema, tinta cálida, acentos vivos pero sofisticados
 const PAL: Record<Owner,{accent:string;light:string;tint:string;ink:string;emoji:string}> = {
   Rolo:    { accent: "#B8864A", light: "#D9B27F", tint: "#F5EBD7", ink: "#5C3E1A", emoji: "🌊" },
-  Claudia: { accent: "#8B5FA8", light: "#B592CC", tint: "#EFE4F5", ink: "#3F2454", emoji: "🐴" },
+  Claudia: { accent: "#8B5FA8", light: "#B592CC", tint: "#EFE4F5", ink: "#3F2454", emoji: "🏇" },
   Castle:  { accent: "#2D8F7A", light: "#6EBFA8", tint: "#DDF0EA", ink: "#164A3E", emoji: "🏛" },
 };
 
