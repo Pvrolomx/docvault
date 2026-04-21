@@ -229,25 +229,24 @@ export default function DocVault() {
     const catId   = modal.cat;
     const vaultId = vaultIds[owner];
 
-    // Asegurar que el vault tiene esta categoría (compatibilidad con vaults viejos)
-    const currentVault = vaultData[owner] || {};
-    if (!currentVault[catId]) {
-      currentVault[catId] = [];
-    }
-    const current = currentVault[catId];
+    // Asegurar que el vault tiene esta categoría
+    const currentVault = {...(vaultData[owner] || {})};
+    if (!currentVault[catId]) currentVault[catId] = [];
+    const current = [...currentVault[catId]];
     const docId   = modal.doc ? modal.doc.id : `${catId}-${Date.now()}`;
     let updated:Doc[];
 
-    // Subir archivos pendientes
+    // Subir archivos pendientes — usar uploading, NO saving (saving bloquea el botón)
     let uploadedFiles: FileAttachment[] = modal.doc ? (modal.doc.files||[]) : [];
     if (pendingFiles.length > 0 && vaultId) {
-      setSaving(true);
+      setUploading(docId);
       for (const file of pendingFiles) {
         try {
           const path = await sbUploadFile(vaultId, catId, file);
           uploadedFiles = [...uploadedFiles, {name:file.name, path, size:file.size, type:file.type, uploaded:Date.now()}];
-        } catch(e:any) { showToast(`Error: ${file.name}`, true); }
+        } catch(e:any) { showToast(`Error subiendo ${file.name}`, true); }
       }
+      setUploading(null);
     }
 
     if (modal.doc) {
@@ -257,7 +256,7 @@ export default function DocVault() {
       updated = [...current, {id:docId,...form,created:Date.now(),files:uploadedFiles}];
       showToast(uploadedFiles.length>0 ? `Guardado con ${uploadedFiles.length} archivo${uploadedFiles.length>1?"s":""} ✓` : "Guardado ✓");
     }
-    await updateOwnerData({...vaultData[owner],[catId]:updated});
+    await updateOwnerData({...currentVault,[catId]:updated});
     setPendingFiles([]);
     setModal(null);
   };
@@ -582,8 +581,8 @@ export default function DocVault() {
               </div>
             </div>
             <div style={{display:"flex",gap:8,marginTop:20}}>
-              <button onClick={submitDoc} disabled={saving} style={{flex:1,padding:"10px 0",borderRadius:6,border:"none",cursor:"pointer",background:`linear-gradient(135deg,${pal.accent},${pal.accent}cc)`,color:"#0D0D0D",fontSize:11,fontFamily:"'Space Mono',monospace",fontWeight:700,letterSpacing:"0.15em",opacity:saving?.6:1}}>
-                {saving?"GUARDANDO…":modal.doc?"ACTUALIZAR":"GUARDAR"}
+              <button onClick={submitDoc} disabled={!!uploading} style={{flex:1,padding:"10px 0",borderRadius:6,border:"none",cursor:uploading?"not-allowed":"pointer",background:`linear-gradient(135deg,${pal.accent},${pal.accent}cc)`,color:"#0D0D0D",fontSize:11,fontFamily:"'Space Mono',monospace",fontWeight:700,letterSpacing:"0.15em",opacity:uploading?0.7:1}}>
+                {uploading ? "SUBIENDO ARCHIVOS…" : modal.doc ? "ACTUALIZAR" : "GUARDAR"}
               </button>
               <button onClick={()=>setModal(null)} style={{padding:"10px 16px",borderRadius:6,border:"1px solid #333",cursor:"pointer",background:"transparent",color:"#bbbbbb",fontSize:11,fontFamily:"'Space Mono',monospace"}}>CANCELAR</button>
             </div>
