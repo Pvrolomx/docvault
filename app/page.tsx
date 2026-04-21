@@ -244,7 +244,7 @@ export default function DocVault() {
           background: active
             ? `radial-gradient(circle at 38% 38%, ${p.accent}50, ${p.accent}18)`
             : "radial-gradient(circle at 38% 38%, #252525, #181818)",
-          border:`2px solid ${active ? p.accent+"70" : "#2a2a2a"}`,
+          border:`2px solid ${active ? p.accent+"70" : "#3a3a3a"}`,
           display:"flex", alignItems:"center", justifyContent:"center",
           fontSize:22, fontFamily:"'Libre Baskerville',serif", fontWeight:700,
           color: active ? p.accent : "#3a3a3a",
@@ -255,14 +255,14 @@ export default function DocVault() {
         <div style={{
           fontSize:11, letterSpacing:"0.22em", fontWeight:700,
           fontFamily:"'Space Mono',monospace",
-          color: active ? p.accent : "#484848"
+          color: active ? p.accent : "#909090"
         }}>{o.toUpperCase()}</div>
         {/* badge */}
         {showCount ? (
           <div style={{
             fontSize:10, padding:"3px 12px", borderRadius:20,
             background: active ? p.accent+"25" : "#1a1a1a",
-            color: active ? p.accent : "#383838",
+            color: active ? p.accent : "#888888",
             border:`1px solid ${active ? p.accent+"40" : "#252525"}`,
             fontFamily:"'Space Mono',monospace", letterSpacing:"0.05em"
           }}>{cnt} doc{cnt!==1?"s":""}</div>
@@ -270,7 +270,7 @@ export default function DocVault() {
           <div style={{
             fontSize:9, padding:"3px 10px", borderRadius:20,
             background: active ? p.accent+"20" : "#1a1a1a",
-            color: active ? p.accent+"cc" : "#383838",
+            color: active ? p.accent+"cc" : "#888888",
             border:`1px solid ${active ? p.accent+"35" : "#252525"}`,
             fontFamily:"'Space Mono',monospace", letterSpacing:"0.08em"
           }}>{unlocked ? "✓ desbloqueado" : "🔒 bloqueado"}</div>
@@ -294,7 +294,7 @@ export default function DocVault() {
       <div style={{width:"100%",maxWidth:520}}>
         {/* Logo */}
         <div style={{textAlign:"center",marginBottom:36}}>
-          <div style={{fontSize:10,letterSpacing:"0.3em",color:"#333",marginBottom:10}}>BÓVEDA PERSONAL</div>
+          <div style={{fontSize:10,letterSpacing:"0.3em",color:"#777777",marginBottom:10}}>BÓVEDA PERSONAL</div>
           <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:32,color:"#E5E0D8",letterSpacing:"-0.01em"}}>DocVault</div>
           <div style={{width:40,height:1,background:"linear-gradient(90deg,transparent,#444,transparent)",margin:"12px auto 0"}}/>
         </div>
@@ -308,7 +308,7 @@ export default function DocVault() {
 
         {/* PIN input */}
         <div style={{"--acc":pal.accent,"--acc-dim":pal.dim} as any}>
-          <div style={{fontSize:9,color:"#444",letterSpacing:"0.2em",marginBottom:8,textAlign:"center"}}>
+          <div style={{fontSize:9,color:"#888888",letterSpacing:"0.2em",marginBottom:8,textAlign:"center"}}>
             PIN DE {owner.toUpperCase()}
           </div>
           <input
@@ -332,7 +332,7 @@ export default function DocVault() {
           opacity:syncing?0.6:1
         }}>{syncing?"CONECTANDO…":"ABRIR BÓVEDA"}</button>
 
-        <div style={{textAlign:"center",marginTop:14,fontSize:10,color:"#2a2a2a"}}>
+        <div style={{textAlign:"center",marginTop:14,fontSize:10,color:"#888888"}}>
           Primera vez → tu PIN crea la bóveda
         </div>
       </div>
@@ -372,29 +372,29 @@ export default function DocVault() {
                 <div style={{fontSize:10,letterSpacing:"0.2em",color:pal.accent,marginBottom:4}}>{modal.doc?"EDITAR":"NUEVO DOCUMENTO"}</div>
                 <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:18,color:"#e5e0d8"}}>{CATEGORIES.find(c=>c.id===modal.cat)?.label}</div>
               </div>
-              <button onClick={()=>setModal(null)} style={{background:"none",border:"none",color:"#555",fontSize:22,cursor:"pointer",lineHeight:1}}>×</button>
+              <button onClick={()=>setModal(null)} style={{background:"none",border:"none",color:"#909090",fontSize:22,cursor:"pointer",lineHeight:1}}>×</button>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
               <div>
-                <div style={{fontSize:10,color:"#555",letterSpacing:"0.15em",marginBottom:4}}>NOMBRE *</div>
+                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>NOMBRE *</div>
                 <input ref={inputRef} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="ej. INE vigente 2025…" onKeyDown={e=>e.key==="Enter"&&submitDoc()}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div>
-                  <div style={{fontSize:10,color:"#555",letterSpacing:"0.15em",marginBottom:4}}>TIPO</div>
+                  <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>TIPO</div>
                   <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{DOC_TYPES.map(t=><option key={t}>{t}</option>)}</select>
                 </div>
                 <div>
-                  <div style={{fontSize:10,color:"#555",letterSpacing:"0.15em",marginBottom:4}}>FECHA</div>
+                  <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>FECHA</div>
                   <input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
                 </div>
               </div>
               <div>
-                <div style={{fontSize:10,color:"#555",letterSpacing:"0.15em",marginBottom:4}}>VENCIMIENTO</div>
+                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>VENCIMIENTO</div>
                 <input type="date" value={form.expires} onChange={e=>setForm(f=>({...f,expires:e.target.value}))}/>
               </div>
               <div>
-                <div style={{fontSize:10,color:"#555",letterSpacing:"0.15em",marginBottom:4}}>NOTAS</div>
+                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>NOTAS</div>
                 <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Folio, ubicación física…" rows={2} style={{resize:"none"}}/>
               </div>
             </div>
@@ -402,7 +402,7 @@ export default function DocVault() {
               <button onClick={submitDoc} disabled={saving} style={{flex:1,padding:"10px 0",borderRadius:6,border:"none",cursor:"pointer",background:`linear-gradient(135deg,${pal.accent},${pal.accent}cc)`,color:"#0D0D0D",fontSize:11,fontFamily:"'Space Mono',monospace",fontWeight:700,letterSpacing:"0.15em",opacity:saving?.6:1}}>
                 {saving?"GUARDANDO…":modal.doc?"ACTUALIZAR":"GUARDAR"}
               </button>
-              <button onClick={()=>setModal(null)} style={{padding:"10px 16px",borderRadius:6,border:"1px solid #333",cursor:"pointer",background:"transparent",color:"#777",fontSize:11,fontFamily:"'Space Mono',monospace"}}>CANCELAR</button>
+              <button onClick={()=>setModal(null)} style={{padding:"10px 16px",borderRadius:6,border:"1px solid #333",cursor:"pointer",background:"transparent",color:"#bbbbbb",fontSize:11,fontFamily:"'Space Mono',monospace"}}>CANCELAR</button>
             </div>
           </div>
         </div>
@@ -413,17 +413,17 @@ export default function DocVault() {
         <div style={{maxWidth:600,margin:"0 auto",padding:"20px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div>
-              <div style={{fontSize:10,letterSpacing:"0.25em",color:"#333",marginBottom:4}}>BÓVEDA PERSONAL</div>
+              <div style={{fontSize:10,letterSpacing:"0.25em",color:"#777777",marginBottom:4}}>BÓVEDA PERSONAL</div>
               <div style={{fontFamily:"'Libre Baskerville',serif",fontSize:26,color:"#E5E0D8"}}>DocVault</div>
             </div>
             <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
-              <div style={{fontSize:10,color:"#383838"}}>{total} doc{total!==1?"s":""}</div>
+              <div style={{fontSize:10,color:"#888888"}}>{total} doc{total!==1?"s":""}</div>
               {installPrompt&&(
                 <button onClick={async()=>{installPrompt.prompt();const{outcome}=await installPrompt.userChoice;if(outcome==="accepted")setInstallPrompt(null);}} style={{padding:"6px 12px",borderRadius:6,border:`1px solid ${pal.accent}60`,background:pal.dim,color:pal.accent,fontSize:10,cursor:"pointer",fontFamily:"'Space Mono',monospace",letterSpacing:"0.1em"}}>
                   ⬇ Instalar App
                 </button>
               )}
-              {saving&&<div style={{fontSize:9,color:"#444",letterSpacing:"0.1em"}}>sincronizando…</div>}
+              {saving&&<div style={{fontSize:9,color:"#888888",letterSpacing:"0.1em"}}>sincronizando…</div>}
             </div>
           </div>
 
@@ -436,7 +436,7 @@ export default function DocVault() {
 
           {/* Search */}
           <div style={{marginTop:14,position:"relative"}}>
-            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#444",fontSize:14}}>⌕</span>
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#888888",fontSize:14}}>⌕</span>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar categoría o documento…" style={{paddingLeft:30}}/>
           </div>
         </div>
@@ -452,23 +452,23 @@ export default function DocVault() {
           return (
             <div key={cat.id} style={{marginBottom:6,borderRadius:8,overflow:"hidden",border:`1px solid ${isOpen?pal.accent+"45":"#1e1e1e"}`,background:isOpen?"#111":"#0D0D0D"}}>
               <button onClick={()=>setOpenCat(isOpen?null:cat.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"13px 14px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left"}}>
-                <span style={{fontSize:17,color:isOpen?pal.accent:"#383838",minWidth:20}}>{cat.icon}</span>
+                <span style={{fontSize:17,color:isOpen?pal.accent:"#888888",minWidth:20}}>{cat.icon}</span>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <span style={{fontSize:13,color:isOpen?"#e5e0d8":"#666"}}>{cat.label}</span>
+                    <span style={{fontSize:13,color:isOpen?"#e5e0d8":"#cccccc"}}>{cat.label}</span>
                     {catDocs.length>0&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:pal.dim,color:pal.accent,border:`1px solid ${pal.accent}35`}}>{catDocs.length}</span>}
                     {expiredDocs.length>0&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#2d0a0a",color:"#f87171",border:"1px solid #7f1d1d55"}}>⚠ {expiredDocs.length} vencido{expiredDocs.length>1?"s":""}</span>}
                     {expiringDocs.length>0&&expiredDocs.length===0&&<span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#2d1f00",color:"#fbbf24",border:"1px solid #92400e55"}}>por vencer</span>}
                   </div>
-                  <div style={{fontSize:11,color:"#383838",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cat.sub}</div>
+                  <div style={{fontSize:11,color:"#aaaaaa",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cat.sub}</div>
                 </div>
-                <span style={{color:"#383838",fontSize:10,transform:isOpen?"rotate(90deg)":"rotate(0)",transition:"transform .2s",display:"inline-block"}}>▶</span>
+                <span style={{color:"#888888",fontSize:10,transform:isOpen?"rotate(90deg)":"rotate(0)",transition:"transform .2s",display:"inline-block"}}>▶</span>
               </button>
 
               {isOpen&&(
                 <div className="sli" style={{padding:"0 14px 14px"}}>
                   <div style={{borderTop:"1px solid #222",marginBottom:12}}/>
-                  {catDocs.length===0&&<div style={{fontSize:11,color:"#383838",fontStyle:"italic",textAlign:"center",padding:"8px 0 12px"}}>Sin documentos en esta categoría</div>}
+                  {catDocs.length===0&&<div style={{fontSize:11,color:"#aaaaaa",fontStyle:"italic",textAlign:"center",padding:"8px 0 12px"}}>Sin documentos en esta categoría</div>}
                   <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:catDocs.length?12:0}}>
                     {catDocs.map(doc=>{
                       const exp=isExpired(doc); const exp2=isExpiring(doc);
@@ -480,14 +480,14 @@ export default function DocVault() {
                             <div style={{fontSize:13,color:"#e5e0d8"}}>{doc.name}</div>
                             <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:6}}>
                               <span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:pal.dim,color:pal.accent,border:`1px solid ${pal.accent}30`}}>{doc.type}</span>
-                              {doc.date&&<span style={{fontSize:10,color:"#555"}}>📅 {doc.date}</span>}
-                              {doc.expires&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:exp?"#2d0a0a":exp2?"#2d1f00":"#1a1a1a",color:exp?"#f87171":exp2?"#fbbf24":"#555",border:`1px solid ${exp?"#7f1d1d55":exp2?"#92400e55":"#2a2a2a"}`}}>{exp?"⚠ ":"↺ "}{doc.expires}</span>}
+                              {doc.date&&<span style={{fontSize:10,color:"#909090"}}>📅 {doc.date}</span>}
+                              {doc.expires&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:exp?"#2d0a0a":exp2?"#2d1f00":"#1a1a1a",color:exp?"#f87171":exp2?"#fbbf24":"#555",border:`1px solid ${exp?"#7f1d1d55":exp2?"#92400e55":"#3a3a3a"}`}}>{exp?"⚠ ":"↺ "}{doc.expires}</span>}
                             </div>
-                            {doc.notes&&<div style={{fontSize:11,color:"#555",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{doc.notes}</div>}
+                            {doc.notes&&<div style={{fontSize:11,color:"#909090",marginTop:6,fontStyle:"italic",lineHeight:1.5}}>{doc.notes}</div>}
                           </div>
                           <div style={{display:"flex",gap:4,flexShrink:0}}>
-                            <button onClick={()=>openEdit(cat.id,doc)} style={{background:"none",border:"none",color:"#555",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#ccc")} onMouseLeave={e=>(e.currentTarget.style.color="#555")}>✎</button>
-                            <button onClick={()=>deleteDoc(cat.id,doc.id)} style={{background:"none",border:"none",color:"#555",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#f87171")} onMouseLeave={e=>(e.currentTarget.style.color="#555")}>✕</button>
+                            <button onClick={()=>openEdit(cat.id,doc)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#ccc")} onMouseLeave={e=>(e.currentTarget.style.color="#555")}>✎</button>
+                            <button onClick={()=>deleteDoc(cat.id,doc.id)} style={{background:"none",border:"none",color:"#909090",cursor:"pointer",padding:"4px 8px",fontSize:12}} onMouseEnter={e=>(e.currentTarget.style.color="#f87171")} onMouseLeave={e=>(e.currentTarget.style.color="#555")}>✕</button>
                           </div>
                         </div>
                       );
@@ -501,12 +501,12 @@ export default function DocVault() {
             </div>
           );
         })}
-        {filtered.length===0&&<div style={{textAlign:"center",padding:"48px 0",color:"#383838",fontSize:12}}>Sin resultados para "{search}"</div>}
+        {filtered.length===0&&<div style={{textAlign:"center",padding:"48px 0",color:"#888888",fontSize:12}}>Sin resultados para "{search}"</div>}
       </div>
 
       {/* Footer */}
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#0A0A0A",borderTop:"1px solid #1a1a1a",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{fontSize:10,color:"#333"}}>DocVault · {owner} · <span style={{color:"#2a9d8f"}}>☁ cloud</span></span>
+        <span style={{fontSize:10,color:"#aaaaaa"}}>DocVault · {owner} · <span style={{color:"#4EADA0"}}>☁ cloud</span></span>
         <span style={{fontSize:10,color:pal.accent}}>● {total} docs</span>
       </div>
     </div>
