@@ -558,9 +558,6 @@ export default function DocVault() {
                       const barColor=exp?"#ef4444":exp2?"#eab308":pal.dot;
                       return (
                         <div key={doc.id} className="drow"
-                          onDragOver={e=>{e.preventDefault();setDragOver(doc.id);}}
-                          onDragLeave={()=>setDragOver(null)}
-                          onDrop={e=>{e.preventDefault();setDragOver(null);handleFiles(cat.id,doc.id,e.dataTransfer.files);}}
                           style={{display:"flex",alignItems:"flex-start",gap:10,padding:12,borderRadius:6,
                             background:dragOver===doc.id?`${pal.accent}12`:"#141414",
                             border:`1px solid ${dragOver===doc.id?pal.accent+"60":"#222"}`,
@@ -583,13 +580,13 @@ export default function DocVault() {
                                     <span style={{fontSize:15,flexShrink:0}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
                                     <div style={{flex:1,minWidth:0}}>
                                       <div style={{fontSize:11,color:"#cccccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
-                                      <div style={{fontSize:9,color:"#666"}}>{(f.size/1024).toFixed(0)} KB</div>
+                                      <div style={{fontSize:9,color:"#888"}}>{(f.size/1024).toFixed(0)} KB</div>
                                     </div>
                                     <button onClick={()=>downloadFile(f.path,f.name)}
-                                      style={{background:"none",border:"none",cursor:"pointer",fontSize:15,padding:"2px 5px",color:"#888"}}
-                                      onMouseEnter={e=>(e.currentTarget.style.color=pal.accent)}
-                                      onMouseLeave={e=>(e.currentTarget.style.color="#888")}
-                                      title="Descargar">⬇️</button>
+                                      style={{background:"none",border:`1px solid #333`,borderRadius:4,cursor:"pointer",fontSize:12,padding:"3px 8px",color:"#aaa",display:"flex",alignItems:"center",gap:4}}
+                                      onMouseEnter={e=>{e.currentTarget.style.color=pal.accent;e.currentTarget.style.borderColor=pal.accent;}}
+                                      onMouseLeave={e=>{e.currentTarget.style.color="#aaa";e.currentTarget.style.borderColor="#333";}}
+                                      title="Descargar">⬇ <span style={{fontSize:10}}>Bajar</span></button>
                                     <button onClick={()=>deleteFile(cat.id,doc.id,f.path)}
                                       style={{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"2px 5px",color:"#555"}}
                                       onMouseEnter={e=>(e.currentTarget.style.color="#f87171")}
@@ -600,19 +597,23 @@ export default function DocVault() {
                               </div>
                             )}
 
-                            {/* Zona drag & drop / tap para subir */}
-                            <label style={{
-                              marginTop:8, display:"flex", alignItems:"center", gap:7,
-                              padding:"8px 10px", borderRadius:5, cursor:"pointer",
-                              border:`1px dashed ${dragOver===doc.id?pal.accent:"#2a2a2a"}`,
-                              color:dragOver===doc.id?pal.accent:"#777",
-                              background:dragOver===doc.id?pal.dim:"transparent",
-                              fontSize:10, transition:"all 0.15s",
-                              opacity:uploading===doc.id?0.6:1
-                            }}>
+                            {/* Zona drag & drop — handlers aquí para que PC funcione */}
+                            <label
+                              onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOver(doc.id);}}
+                              onDragLeave={e=>{e.preventDefault();setDragOver(null);}}
+                              onDrop={e=>{e.preventDefault();e.stopPropagation();setDragOver(null);handleFiles(cat.id,doc.id,e.dataTransfer.files);}}
+                              style={{
+                                marginTop:8, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                                padding:"10px 12px", borderRadius:6, cursor:"pointer",
+                                border:`1px dashed ${dragOver===doc.id?pal.accent:pal.accent+"50"}`,
+                                color:dragOver===doc.id?pal.accent:pal.accent+"cc",
+                                background:dragOver===doc.id?pal.dim:`${pal.accent}08`,
+                                fontSize:11, transition:"all 0.15s",
+                                opacity:uploading===doc.id?0.6:1
+                              }}>
                               {uploading===doc.id
-                                ? <><span style={{display:"inline-block",animation:"spin 0.8s linear infinite"}}>⟳</span> Subiendo…</>
-                                : <><span>📎</span> Arrastra aquí o toca para adjuntar</>
+                                ? <><span style={{display:"inline-block",animation:"spin 0.8s linear infinite",fontSize:14}}>⟳</span> Subiendo…</>
+                                : <><span style={{fontSize:14}}>📎</span> <span>Arrastra o toca para adjuntar</span></>
                               }
                               <input type="file" multiple style={{display:"none"}}
                                 onChange={e=>e.target.files&&handleFiles(cat.id,doc.id,e.target.files)}
