@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const OWNERS = ["Rolo", "Claudia"];
+const OWNERS = ["Rolo", "Claudia", "Castle"];
 
-const CATEGORIES = [
+const CATEGORIES_PERSONAL = [
   { id: "identidad",   icon: "◈", label: "Identidad",         sub: "INE · Pasaporte · CURP · Acta de Nacimiento" },
   { id: "fiscal",      icon: "◉", label: "Fiscal & IMSS",     sub: "RFC · Constancia SAT · NSS · IMSS" },
   { id: "profesional", icon: "◆", label: "Profesional",       sub: "Cédula · Título · Diplomas · Certificados" },
@@ -21,11 +21,27 @@ const CATEGORIES = [
   { id: "otros",       icon: "◯", label: "Otros",             sub: "Documentos varios · Misceláneos" },
 ];
 
+const CATEGORIES_CASTLE = [
+  { id: "constitucion", icon: "◈", label: "Constitución",      sub: "Acta · Estatutos · Modificaciones" },
+  { id: "fiscal_emp",   icon: "◉", label: "Fiscal",            sub: "RFC · Constancia SAT · Declaraciones" },
+  { id: "imss_emp",     icon: "◆", label: "IMSS & Nómina",     sub: "Registro patronal · Altas/Bajas · Nómina" },
+  { id: "permisos",     icon: "◫", label: "Permisos & Licencias", sub: "Uso de suelo · Operación · Turismo" },
+  { id: "contratos",    icon: "◳", label: "Contratos",         sub: "Arrendamiento · Servicios · Proveedores" },
+  { id: "bancario",     icon: "◑", label: "Bancario",          sub: "Cuentas · Estados · Tarjetas corporativas" },
+  { id: "inmuebles_emp",icon: "◰", label: "Inmuebles",         sub: "Propiedades · Contratos de renta" },
+  { id: "poderes",      icon: "◮", label: "Poderes & Legal",   sub: "Poderes notariales · Representantes" },
+  { id: "plataformas",  icon: "◍", label: "Plataformas",       sub: "Airbnb · VRBO · Booking · Licencias" },
+  { id: "seguros",      icon: "◎", label: "Seguros",           sub: "Pólizas · Propiedades · Responsabilidad" },
+  { id: "contabilidad", icon: "◐", label: "Contabilidad",      sub: "Balances · Estados financieros · Auditorías" },
+  { id: "otros_emp",    icon: "◯", label: "Otros",             sub: "Documentos corporativos varios" },
+];
+
 const DOC_TYPES = ["Original","Copia simple","Copia certificada","Digital oficial","Apostillada","Traducida","Vigente","Vencida","Histórico"];
 
 const PAL: Record<string,{accent:string;dim:string;mid:string;dot:string}> = {
   Rolo:    { accent: "#C8A96E", dim: "#C8A96E22", mid: "#C8A96E44", dot: "#C8A96E" },
   Claudia: { accent: "#9B7BB8", dim: "#9B7BB822", mid: "#9B7BB844", dot: "#9B7BB8" },
+  Castle:  { accent: "#4EADA0", dim: "#4EADA022", mid: "#4EADA044", dot: "#4EADA0" },
 };
 
 const ITERATIONS = 310000;
@@ -89,10 +105,10 @@ export default function DocVault() {
   const [owner, setOwner]         = useState("Rolo");
   const [pinInput, setPinInput]   = useState("");
   const [pinError, setPinError]   = useState("");
-  const [vaultData, setVaultData] = useState<Record<string,VaultData>>({ Rolo:{}, Claudia:{} });
-  const [keys,  setKeys]          = useState<Record<string,CryptoKey|null>>({ Rolo:null, Claudia:null });
-  const [salts, setSalts]         = useState<Record<string,string>>({ Rolo:"", Claudia:"" });
-  const [vaultIds, setVaultIds]   = useState<Record<string,string>>({ Rolo:"", Claudia:"" });
+  const [vaultData, setVaultData] = useState<Record<string,VaultData>>({ Rolo:{}, Claudia:{}, Castle:{} });
+  const [keys,  setKeys]          = useState<Record<string,CryptoKey|null>>({ Rolo:null, Claudia:null, Castle:null });
+  const [salts, setSalts]         = useState<Record<string,string>>({ Rolo:"", Claudia:"", Castle:"" });
+  const [vaultIds, setVaultIds]   = useState<Record<string,string>>({ Rolo:"", Claudia:"", Castle:"" });
   const [openCat, setOpenCat]     = useState<string|null>(null);
   const [modal, setModal]         = useState<{cat:string;doc?:Doc}|null>(null);
   const [form,  setForm]          = useState({ name:"", type:"Original", notes:"", date:"", expires:"" });
@@ -126,7 +142,9 @@ export default function DocVault() {
         catch { setSyncing(false); setPinError("PIN incorrecto"); return; }
       } else {
         salt = await generateSalt(); key = await deriveKey(pinInput, salt);
-        data = {}; for (const c of CATEGORIES) data[c.id] = [];
+        data = {};
+        const cats = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
+        for (const c of cats) data[c.id] = [];
         const blob = await encryptData(data, key);
         await sbSave(vaultId, blob, salt);
       }
@@ -184,6 +202,7 @@ export default function DocVault() {
   };
 
   const pal   = PAL[owner];
+  const CATEGORIES = owner === "Castle" ? CATEGORIES_CASTLE : CATEGORIES_PERSONAL;
   const oData = vaultData[owner] || {};
   const total = Object.values(oData).reduce((s,a)=>s+(a?.length||0),0);
   const filtered = search.trim()
@@ -272,7 +291,7 @@ export default function DocVault() {
         .unlock-btn{transition:all 0.2s;} .unlock-btn:hover{filter:brightness(1.1);}
       `}</style>
 
-      <div style={{width:"100%",maxWidth:400}}>
+      <div style={{width:"100%",maxWidth:520}}>
         {/* Logo */}
         <div style={{textAlign:"center",marginBottom:36}}>
           <div style={{fontSize:10,letterSpacing:"0.3em",color:"#333",marginBottom:10}}>BÓVEDA PERSONAL</div>
