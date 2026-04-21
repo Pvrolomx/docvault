@@ -206,22 +206,40 @@ export default function DocVault() {
     await saveToCloud(newData);
   };
 
-  const openAdd  = (catId:string) => { setModal({cat:catId}); setForm({name:"",type:"Original",notes:"",date:"",expires:""}); setTimeout(()=>inputRef.current?.focus(),80); };
-  const openEdit = (catId:string, doc:Doc) => { setModal({cat:catId,doc}); setForm({name:doc.name,type:doc.type,notes:doc.notes,date:doc.date,expires:doc.expires}); setTimeout(()=>inputRef.current?.focus(),80); };
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const openAdd  = (catId:string) => { setModal({cat:catId}); setForm({name:"",type:"Original",notes:"",date:"",expires:""}); setPendingFiles([]); setTimeout(()=>inputRef.current?.focus(),80); };
+  const openEdit = (catId:string, doc:Doc) => { setModal({cat:catId,doc}); setForm({name:doc.name,type:doc.type,notes:doc.notes,date:doc.date,expires:doc.expires}); setPendingFiles([]); setTimeout(()=>inputRef.current?.focus(),80); };
 
   const submitDoc = async () => {
     if (!form.name.trim()||!modal) return;
-    const catId = modal.cat;
+    const catId   = modal.cat;
     const current = vaultData[owner]?.[catId] || [];
+    const docId   = modal.doc ? modal.doc.id : `${catId}-${Date.now()}`;
+    const vaultId = vaultIds[owner];
     let updated:Doc[];
+
+    // Subir archivos pendientes
+    let uploadedFiles: FileAttachment[] = modal.doc ? (modal.doc.files||[]) : [];
+    if (pendingFiles.length > 0 && vaultId) {
+      setSaving(true);
+      for (const file of pendingFiles) {
+        try {
+          const path = await sbUploadFile(vaultId, catId, file);
+          uploadedFiles = [...uploadedFiles, {name:file.name, path, size:file.size, type:file.type, uploaded:Date.now()}];
+        } catch(e:any) { showToast(`Error: ${file.name}`, true); }
+      }
+    }
+
     if (modal.doc) {
-      updated = current.map(d => d.id===modal.doc!.id ? {...d,...form} : d);
+      updated = current.map(d => d.id===docId ? {...d,...form,files:uploadedFiles} : d);
       showToast("Actualizado ✓");
     } else {
-      updated = [...current, {id:`${catId}-${Date.now()}`,...form,created:Date.now()}];
-      showToast("Guardado ✓");
+      updated = [...current, {id:docId,...form,created:Date.now(),files:uploadedFiles}];
+      showToast(uploadedFiles.length>0 ? `Guardado con ${uploadedFiles.length} archivo${uploadedFiles.length>1?"s":""} ✓` : "Guardado ✓");
     }
     await updateOwnerData({...vaultData[owner],[catId]:updated});
+    setPendingFiles([]);
     setModal(null);
   };
 
@@ -479,6 +497,69 @@ export default function DocVault() {
               <div>
                 <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:4}}>NOTAS</div>
                 <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Folio, ubicación física…" rows={2} style={{resize:"none"}}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,color:"#909090",letterSpacing:"0.15em",marginBottom:6}}>ARCHIVOS ADJUNTOS</div>
+
+                {/* Archivos ya guardados (edición) */}
+                {(modal.doc?.files||[]).length>0&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:8}}>
+                    {(modal.doc!.files||[]).map(f=>(
+                      <div key={f.path} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:5,background:"#141414",border:"1px solid #2a2a2a"}}>
+                        <span style={{fontSize:13}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
+                        <div style={{flex:1,fontSize:11,color:"#cccccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
+                        <span style={{fontSize:9,color:"#666"}}>{(f.size/1024).toFixed(0)}KB</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Archivos nuevos pendientes */}
+                {pendingFiles.length>0&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:8}}>
+                    {pendingFiles.map((f,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 10px",borderRadius:5,background:`${pal.accent}10`,border:`1px solid ${pal.accent}30`}}>
+                        <span style={{fontSize:13}}>{f.type.startsWith("image/")?"🖼️":f.type==="application/pdf"?"📄":"📎"}</span>
+                        <div style={{flex:1,fontSize:11,color:pal.accent,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</div>
+                        <span style={{fontSize:9,color:pal.accent+"99"}}>{(f.size/1024).toFixed(0)}KB</span>
+                        <button onClick={()=>setPendingFiles(prev=>prev.filter((_,j)=>j!==i))}
+                          style={{background:"none",border:"none",color:"#666",cursor:"pointer",fontSize:11,padding:"0 4px"}}
+                          onMouseEnter={e=>(e.currentTarget.style.color="#f87171")}
+                          onMouseLeave={e=>(e.currentTarget.style.color="#666")}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Drop zone */}
+                <label
+                  onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor=pal.accent;e.currentTarget.style.background=pal.dim;}}
+                  onDragLeave={e=>{e.currentTarget.style.borderColor=pal.accent+"50";e.currentTarget.style.background=`${pal.accent}08`;}}
+                  onDrop={e=>{
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor=pal.accent+"50";
+                    e.currentTarget.style.background=`${pal.accent}08`;
+                    const newFiles = Array.from(e.dataTransfer.files).filter(f=>f.size<=10*1024*1024);
+                    setPendingFiles(prev=>[...prev,...newFiles]);
+                  }}
+                  style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,
+                    padding:"16px 12px",borderRadius:8,cursor:"pointer",textAlign:"center",
+                    border:`1px dashed ${pal.accent}50`,
+                    background:`${pal.accent}08`,
+                    transition:"all 0.15s"
+                  }}>
+                  <span style={{fontSize:22}}>📎</span>
+                  <span style={{fontSize:11,color:pal.accent,fontWeight:700}}>Arrastra archivos aquí</span>
+                  <span style={{fontSize:10,color:"#888"}}>o toca para seleccionar · máx. 10MB por archivo</span>
+                  <input type="file" multiple style={{display:"none"}}
+                    onChange={e=>{
+                      if (!e.target.files) return;
+                      const newFiles = Array.from(e.target.files).filter(f=>f.size<=10*1024*1024);
+                      setPendingFiles(prev=>[...prev,...newFiles]);
+                      e.target.value="";
+                    }}/>
+                </label>
               </div>
             </div>
             <div style={{display:"flex",gap:8,marginTop:20}}>
