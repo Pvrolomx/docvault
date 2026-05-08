@@ -335,6 +335,34 @@ export default function DocVault() {
     } catch { showToast("Error al descargar", true); }
   };
 
+  const shareFile = async (file: DocFile) => {
+    try {
+      const url = await sbSignedUrl(file.path);
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Fetch failed");
+      const blob = await resp.blob();
+      const ext = file.mime === "application/pdf" ? ".pdf"
+                : file.mime.startsWith("image/") ? "." + file.mime.split("/")[1].replace("jpeg","jpg")
+                : "";
+      const fileObj = new File([blob], file.name + ext, { type: file.mime });
+
+      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+        await navigator.share({
+          files: [fileObj],
+          title: file.name,
+          text: file.notes || file.name,
+        });
+      } else {
+        showToast("Compartir no soportado, descargando…");
+        download(file);
+      }
+    } catch (e: any) {
+      if (e.name !== "AbortError") {
+        showToast("Error al compartir", true);
+      }
+    }
+  };
+
   const switchOwner = (o: Owner) => {
     if (o === owner) return;
     if (vaultKey[o]) {
@@ -523,6 +551,7 @@ export default function DocVault() {
             onRename={(name) => updateFile(editing.catId, editing.fileId, {name})}
             onNotes={(notes) => updateFile(editing.catId, editing.fileId, {notes})}
             onDownload={() => download(file)}
+            onShare={() => shareFile(file)}
             onDelete={() => deleteFile(editing.catId, editing.fileId)}
           />
         );
@@ -739,13 +768,14 @@ function FileRow({file, pal, uploading, onEdit, onDownload}:{
 }
 
 // ─── EDIT SHEET ────────────────────────────────────────────────────────────
-function EditSheet({file, pal, onClose, onRename, onNotes, onDownload, onDelete}:{
+function EditSheet({file, pal, onClose, onRename, onNotes, onDownload, onShare, onDelete}:{
   file: DocFile;
   pal: typeof PAL[Owner];
   onClose: () => void;
   onRename: (name: string) => void;
   onNotes: (notes: string) => void;
   onDownload: () => void;
+  onShare: () => void;
   onDelete: () => void;
 }) {
   const [name, setName] = useState(file.name);
@@ -835,23 +865,30 @@ function EditSheet({file, pal, onClose, onRename, onNotes, onDownload, onDelete}
           {(file.size/1024).toFixed(0)} KB · {file.mime} · {new Date(file.uploaded).toLocaleDateString("es-MX")}
         </div>
 
-        <div style={{display:"flex",gap:8}}>
-          <button onClick={onDownload} style={{
-            flex:1, padding:"12px 0", borderRadius:10,
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button onClick={onShare} style={{
+            flex:"1 1 calc(50% - 4px)", padding:"12px 0", borderRadius:10,
             border:"none",
             background:`linear-gradient(135deg, ${pal.accent}, ${pal.light})`,
             color:"#fff", fontSize:12, fontWeight:700, letterSpacing:"0.1em",
             cursor:"pointer",
+          }}>↗ COMPARTIR</button>
+          <button onClick={onDownload} style={{
+            flex:"1 1 calc(50% - 4px)", padding:"12px 0", borderRadius:10,
+            border:`1px solid ${pal.light}`,
+            background: pal.tint, color: pal.ink,
+            fontSize:12, fontWeight:700, letterSpacing:"0.1em",
+            cursor:"pointer",
           }}>⬇ DESCARGAR</button>
           <button onClick={onDelete} style={{
-            padding:"12px 16px", borderRadius:10,
+            flex:"0 0 auto", padding:"12px 16px", borderRadius:10,
             border:"1px solid #d4a8a8",
             background:"#fff", color:"#a84747",
             fontSize:12, fontWeight:700, letterSpacing:"0.1em",
             cursor:"pointer",
           }}>🗑</button>
           <button onClick={onClose} style={{
-            padding:"12px 16px", borderRadius:10,
+            flex:"1 1 auto", padding:"12px 16px", borderRadius:10,
             border:"1px solid #d4c5a8",
             background:"#fff", color:"#8a7a65",
             fontSize:12, fontWeight:700, letterSpacing:"0.1em",
