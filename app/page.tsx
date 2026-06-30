@@ -19,6 +19,7 @@ const CATEGORIES_PERSONAL = [
   { id: "salud",       icon: "◍", label: "Salud & Seguro",    sub: "INAPAM · Médico · Expediente" },
   { id: "financiero",  icon: "◎", label: "Financiero",        sub: "Cuentas · Estados · Inversiones" },
   { id: "migratorio",  icon: "◐", label: "Migratorio",        sub: "Visa · Residente · FM3" },
+  { id: "apps",        icon: "◉", label: "Apps",              sub: "Contraseñas · PWA Builder · Cuentas" },
   { id: "otros",       icon: "◯", label: "Otros",             sub: "Varios · Misceláneos" },
 ];
 
